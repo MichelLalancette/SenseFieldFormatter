@@ -1,5 +1,5 @@
 {
-  "name": "SenseFieldFormatter",
+  "name": "Sense Field Formatter",
   "version": "1.5.0",
   "description": "Formats Qlik Fields",
   "main": "js/popup.js",
