@@ -1,0 +1,26 @@
+{
+
+  "description": "Qlik Sense Field Formatter",
+  "manifest_version": 3,
+  "name": "SenseFieldFormatter",
+  "version": "1.5.0",
+  "homepage_url": "https://github.com/MichelLalancette/SenseFieldFormatter",
+  "icons": {
+    "48": "./images/SenseFieldFormatter_48.png"
+  },
+
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_icon": "./images/SenseFieldFormatter_32.png",
+    "theme_icons": [{
+        "light": "./images/SenseFieldFormatter_32.png",
+        "dark": "./images/SenseFieldFormatter_32.png",
+        "size": 32
+    }],
+    "default_title": "Qlik Sense Field Formatter",
+    "default_popup": "html/popup.html"
+  }
+
+}

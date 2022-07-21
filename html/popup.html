@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<title>Qlik Sense Field Formatter</title>
+
+<head>
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../css/popup.css" />
+</head>
+
+<body>
+  <header>
+    <div class="lead-title">
+      <div class="headerColumn">
+        <div class="headerRow">
+          <img src="../images/SenseFieldFormatter_48.png" alt="SenseFieldFormatter" />
+        </div>
+      </div>
+      <div class="headerColumn">
+        <div class="headerRow">
+          <label class="titleText">Sense Field Formatter</label>
+        </div>
+        <div class="headerRow">
+          <label class="infoLabel">By: Michel Lalancette</label>
+        </div>
+        <div class="headerRow">
+          <div class="headerColumn">
+            <a href="https://github.com/MichelLalancette/SenseFieldFormatter" target="_blank" rel="noopener noreferrer"
+              class="infoLabel">
+              <img alt="GitHub" src="../images/GitHub-Mark-Light-32px.png" width=21" height="21"></a>
+          </div>
+          <div class="headerColumn">
+            <a href="https://www.linkedin.com/in/michel-lalancette/" target="_blank" rel="noopener noreferrer"
+              class="infoLabel">
+              <img alt="LinkedIn" src="../images/LinkedIn.png" width=21" height="21"></a>
+          </div>
+        </div>
+      </div>
+      <div class="headerColumn themeToggle">
+        <button type="button" class="infoLabel themeLabel" id="toggleTheme" name="toggleTheme" value="dark">Toggle Light
+          Mode</button>
+      </div>
+    </div>
+    </div>
+  </header>
+  <section class="flex-sect">
+    <div class="row">
+      <div class="cell">
+        <form class="form" name="fieldEntry">
+          <div class="tab">
+            <button type="button" class="tablinks active" name="inputTab">INPUT</button>
+            <button type="button" class="tablinks" name="outputTab" id="outputTab">OUTPUT</button>
+          </div>
+          <div class="form-group tabcontent" id="inputText">
+            <textarea class="fieldTextInput" id="fieldInfo" name="fieldInfo" spellcheck="false"
+              placeholder="Paste your field list to format.&#10;e.g.:&#10;Column1, &#10;&#34;Column2&#34;,&#10;&#91;Column 3&#93;"></textarea>
+          </div>
+          <div class="form-group tabcontent" id="outputText" style="display: none;">
+            <textarea class="fieldTextInput" id="formattingOutput" name="formattingOutput" spellcheck="false"
+              readonly></textarea>
+          </div>
+          <div class="cell">
+            <div class="row">
+              <button class="button" name="previewBtn" value="previewFormat" type="button">Preview Output</button>
+              <button class="button" name="submitBtn" value="transformText" type="button">Copy to clipboard</button>
+            </div>
+            <label class="label" id="transformLbl" name="transformLbl" />
+          </div>
+        </form>
+      </div>
+      <div class="cell">
+        <form class="form" name="configuration">
+          <div class="form-group" id="aliasAsSourceField"
+            title="Uses the alias in your pasted fields as the source field for further transformation. Useful whenever you want to reuse already formatted fields.">
+            <label class="label" for="isSourceFieldAlias" id="aliasAsSourceFieldLabel">
+              <input type="checkbox" name="isSourceFieldAlias" value="M" class="checkbox" id="isSourceFieldAlias">
+              Ignore formatting on Key Fields?</label>
+          </div>
+          <hr>
+          <div class="form-group" id="primaryKeySection"
+            title="Ignored key fields will NOT be formatted.&#10;Key fields always receive a field delimiter and comma position regardless of this setting.&#10;e.g. %MyKeyField will become [%Inventory.MyKeyField] if prefixing is enabled and the affix value is &quot;Inventory&quot;.">
+            <label class="option-label noindent keyField" for="keyFieldIdentifier">Key Prefix:
+              <input class="smallInput" name="keyFieldIdentifier" id="keyFieldIdentifier" /></label>
+            <label class="label" for="isFormatKeyField" id="ignoreFormatKeyFieldLabel">
+              <input type="checkbox" name="isFormatKeyField" value="M" class="checkbox" id="isIgnoreKeyField">
+              Ignore formatting on Key Fields?</label>
+          </div>
+          <hr>
+          <div class="form-group" id="commaPositionSection"
+            title="Should the comma be placed at the start or end of each line.">
+            <label class="label" for="commaPosition">Comma Position:
+              <select title="commaPosition" class="dropdown" id="commaPosition" name="commaPosition">
+                <option value="lc">,Leading Comma</option>
+                <option value="tc">Trailing Comma,</label>
+            </select></label>
+          </div>
+          <hr>
+          <div class="form-group" id="fieldDelimiterSection"
+            title="Wraps the content using either double quotes or square brackets.">
+            <label class="label" for="fieldDelimiter">Field Delimiter
+              <select class="dropdown" id="fieldDelimiter" name="fieldDelimiter" title="fieldDelimiter">
+                <option value="dq">&quot;DoubleQuotes&quot;</option>
+                <option value="sb">[Square Brackets]</label>
+            </select></label>
+          </div>
+          <hr>
+          <div class="form-group" id="fieldReplaceChars"
+            title="Finds and replaces a list of characters by another. The replacement can be multiple characters long.&#10;e.g. Replace all underscores _ by a hyphen surrounded by spaces. &#10; Customer_Field -> [Customer - Field]">
+            <label class="label" for="isReplaceChars">
+              <input type="checkbox" name="isReplaceChars" value="M" class="checkbox" id="isReplaceChars">
+              Replace characters</label>
+            <div>
+              <label class="option-label replaceChar" for="charsToReplace">Find what:
+                <input class="smallInput smallInput-wide" name="charsToReplace" id="charsToReplace" /></label>
+            </div>
+            <div>
+              <label class="option-label replaceChar" for="replacementChar">Replace with:
+                <input class="smallInput smallInput-wide" name="replacementChar" id="replacementChar" /></label>
+            </div>
+          </div>
+          <hr>
+          <div class="form-group" id="spaceOutCapitals"
+            title="Inserts a space before each capital letter. Applies before the case change. MyNewField -> [My New Field]">
+            <label class="label" for="isSpaceOutCapitals">
+              <input type="checkbox" name="isSpaceOutCapitals" value="1" class="checkbox" id="isSpaceOutCapitals">
+              Insert a space before capitals?
+            </label>
+          </div>
+          <hr>
+          <div class="form-group" id="StringCase"
+            title="Applies a string transformation such as Upper, Lower, and Capitalize">
+            <label class="label" for="changeStringCase">Change Case:
+              <select class="dropdown" id="changeStringCase" name="changeStringCase" title="changeStringCase">
+                <option value="doNothing">--</option>
+                <option value="capitalize">Capitalize</option>
+                <option value="upper">UPPERCASE</option>
+                <option value="lower">lowercase</option>
+              </select></label>
+          </div>
+          <hr>
+          <div class="form-group" id="subField"
+            title="Extracts substring components in a string where it consists of two or more parts separated by a delimiter.">
+            <label class="label" for="isSubfieldFields">
+              <input type="checkbox" name="isSubfieldFields" value="1" class="checkbox" id="isSubfieldFields" />Subfield
+              the field
+              names?</label>
+              <div>
+            <label class="option-label subField" for="subfieldSeparator">Delimiter:
+              <input class="smallInput" name="subfieldSeparator" id="subfieldSeparator" maxlength="1" /></label>
+            </div>
+            <div>
+              <label class="option-label subField" for="subfieldno">Field no:
+                <input class="smallInput" name="subfieldno" id="subfieldno" maxlength="2" /></label>
+              </div>
+          </div>
+          <hr>
+          <div class="form-group" id="fieldAffixSection"
+            title="Use to add text before or after every field. (Prefix.FieldName) or (FieldName.Suffix)">
+            <label class="label" for="fieldAffixPosition">
+              Add Suffix/Prefix?
+              <select class="dropdown" id="fieldAffixPosition" name="fieldAffixPosition" title="fieldAffixPosition">
+                <option value="doNothing">--</option>
+                <option value="prefix">Prefix</option>
+                <option value="suffix">Suffix</option>
+              </select></label>
+            <label class="option-label fieldAffix" for="suffixField">Affix:
+              <input class="smallInput smallInput-wide" name="fieldAffixText" id="fieldAffixText" />
+            </label>
+          </div>
+        </form>
+      </div>
+    </div>
+    <footer></footer>
+  </section>
+  <script src="../js/popup.js"></script>
+</body>
+
+
+</html>

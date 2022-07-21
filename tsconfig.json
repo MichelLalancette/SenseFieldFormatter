@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    // Visit https://aka.ms/tsconfig to read more about this file
+
+
+
+    // Language and Environment
+    "target": "ES6",
+    "lib": ["ES5", "ES6", "DOM", "DOM.Iterable"],
+
+    // Modules
+    "module": "commonjs",
+    "rootDir": "ts",
+
+     "outDir": "./js",
+
+    "esModuleInterop": true,
+
+    "forceConsistentCasingInFileNames": true,
+
+    // Type Checking
+    "strict": true,
+
+    // Completeness
+    "skipLibCheck": true
+  }
+}
