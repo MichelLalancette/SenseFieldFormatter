@@ -189,16 +189,20 @@ function formatFieldsAndPreview() {
     previewFormatting(FORMATTED_OUTPUT);
 }
 function formatInputFields() {
-    // Split the string into an array for each line break, then remove empty rows
-    let fieldArray = document.getElementById("fieldInfo").value.split(/[\r\n\\]+/).filter(function (str) { return str.trim(); });
+    // Split the string into an array for each line break, trim records, then remove empty rows
+    let fieldArray = document.getElementById("fieldInfo").value.split(/[\r\n\\]+/).map(s => s.trim()).filter(function (str) { return str; });
     let aliasFieldName;
     let sourceFieldName;
     let isKeyField;
     for (let i = 0; i < fieldArray.length; i++) {
         aliasFieldName = fieldArray[i];
         if (userSettings.useAliasAsSourceName) {
-            aliasFieldName = removeDelimiter(aliasFieldName.replace(/(.+\sAS\s+)/i, ''));
-        } // TODO frontend + backend
+            aliasFieldName = aliasFieldName.replace(/(.+\sAS\s+)/i, '');
+        }
+        else if (aliasFieldName.search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) {
+            aliasFieldName = aliasFieldName.substring(0, aliasFieldName.search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+        }
+        aliasFieldName = removeDelimiter(aliasFieldName);
         sourceFieldName = AddFieldDelimiter(aliasFieldName); // Create the source field name by wrapping it with delimiters
         isKeyField = fieldIsAKeyField(aliasFieldName); // Check if the key field is a key Identifier using the configuration
         if (userSettings.isSubfieldFieldName) {
@@ -287,11 +291,11 @@ function insertCommaIntoArrayValue(pFieldValue, pArraySize, pArrayIndex) {
 function removeCharacter(pFieldValue, pCharToRemove) {
     let isCharacterFound = "false";
     if (left(pFieldValue, 1) === pCharToRemove) {
-        pFieldValue = pFieldValue.slice(1);
+        pFieldValue = pFieldValue.slice(1).trim();
         isCharacterFound = "true";
     }
     if (right(pFieldValue, 1) === pCharToRemove) {
-        pFieldValue = pFieldValue.slice(0, -1);
+        pFieldValue = pFieldValue.slice(0, -1).trim();
         isCharacterFound = "true";
     }
     let returnInformation = [pFieldValue, isCharacterFound];

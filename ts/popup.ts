@@ -223,17 +223,21 @@ function formatFieldsAndPreview() {
 }
 
 function formatInputFields() {
-  // Split the string into an array for each line break, then remove empty rows
-  let fieldArray = (<HTMLInputElement>document.getElementById("fieldInfo")).value.split(/[\r\n\\]+/).filter(function (str) { return str.trim() });
-
+  // Split the string into an array for each line break, trim records, then remove empty rows
+  let fieldArray = (<HTMLInputElement>document.getElementById("fieldInfo")).value.split(/[\r\n\\]+/).map(s => s.trim()).filter(function (str) { return str });
 
   let aliasFieldName: string;
   let sourceFieldName: string;
   let isKeyField: boolean;
+  
   for (let i = 0; i < fieldArray.length; i++) {
     aliasFieldName = fieldArray[i];
-
-    if (userSettings.useAliasAsSourceName) { aliasFieldName = removeDelimiter(aliasFieldName.replace(/(.+\sAS\s+)/i, '')); } // TODO frontend + backend
+    
+    if (userSettings.useAliasAsSourceName) { aliasFieldName = aliasFieldName.replace(/(.+\sAS\s+)/i, ''); }
+    else if (aliasFieldName.search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) {
+      aliasFieldName = aliasFieldName.substring(0, aliasFieldName.search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+    }
+    aliasFieldName = removeDelimiter(aliasFieldName);
     sourceFieldName = AddFieldDelimiter(aliasFieldName); // Create the source field name by wrapping it with delimiters
 
     isKeyField = fieldIsAKeyField(aliasFieldName); // Check if the key field is a key Identifier using the configuration
@@ -336,11 +340,11 @@ function removeCharacter(pFieldValue: string, pCharToRemove: string): string[] {
   let isCharacterFound: string = "false";
 
   if (left(pFieldValue, 1) === pCharToRemove) {
-    pFieldValue = pFieldValue.slice(1);
+    pFieldValue = pFieldValue.slice(1).trim();
     isCharacterFound = "true";
   }
   if (right(pFieldValue, 1) === pCharToRemove) {
-    pFieldValue = pFieldValue.slice(0, -1);
+    pFieldValue = pFieldValue.slice(0, -1).trim();
     isCharacterFound = "true";
   }
 
