@@ -1,11 +1,9 @@
 # Sense Field Formatter.
 
 <p align="center">
-<a href="https://addons.mozilla.org/en-US/firefox/addon/sensefieldformatter/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png" alt="Get uBlock Origin for Firefox"></a>
-<a href="https://chrome.google.com/webstore/detail/sensefieldformatter/eemcdboengmokjdklikamefkocdiakho"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png" alt="Get uBlock Origin for Chromium"></a>
+<a href="https://addons.mozilla.org/en-US/firefox/addon/sensefieldformatter/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png" alt="Get Sense Field Formatter for Firefox"></a>
+<a href="https://chrome.google.com/webstore/detail/sensefieldformatter/eemcdboengmokjdklikamefkocdiakho"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png" alt="Get Sense Field Formatter for Chromium"></a>
 </p>
-
-***
 
 # What it does #
 
@@ -91,6 +89,11 @@ e.g. Using the customer dimension where a customer may be a Ship To or Bill To c
 
 ***Affix:** The text that will be used as an affix. Make sure to add a spaceto your affix if you'd like the new string to remain spaced out.*
 
+
 ## License
 
 [GPLv3](https://github.com/MichelLalancette/SenseFieldFormatter/blob/main/README.md).
+
+## ***If you like my content and would like to support its development, feel free to buy me a beer/coffee.***
+
+<a href="https://www.paypal.com/donate/?hosted_button_id=C8B7EZ44BM3NU"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Paypal Donation Button"></a>
