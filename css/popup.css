@@ -31,6 +31,9 @@
     font-family: Helvetica, serif;
     font-weight: bold;
   }
+  .titleTextSmall{
+    font-size: 9px;
+  }
   .flex-sect{
     font-family:Helvetica, serif;
     background-color:#343742;

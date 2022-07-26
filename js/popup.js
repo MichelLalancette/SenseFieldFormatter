@@ -205,15 +205,21 @@ function formatInputFields() {
         aliasFieldName = removeDelimiter(aliasFieldName);
         sourceFieldName = AddFieldDelimiter(aliasFieldName); // Create the source field name by wrapping it with delimiters
         isKeyField = fieldIsAKeyField(aliasFieldName); // Check if the key field is a key Identifier using the configuration
-        if (userSettings.isSubfieldFieldName) {
-            aliasFieldName = applySubField(aliasFieldName);
+        if (!isKeyField || (isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
+            if (userSettings.isSubfieldFieldName) {
+                aliasFieldName = applySubField(aliasFieldName);
+            }
+            ;
+            if (userSettings.isReplaceChars) {
+                aliasFieldName = replaceChars(aliasFieldName);
+            }
+            // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
+            if (userSettings.isSpaceOutCapitals) {
+                aliasFieldName = spaceOutCapitals(aliasFieldName, isKeyField);
+            }
+            aliasFieldName = setFieldCase(aliasFieldName);
+            aliasFieldName = addAffix(aliasFieldName, isKeyField);
         }
-        ;
-        aliasFieldName = replaceChars(aliasFieldName);
-        // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
-        aliasFieldName = spaceOutCapitals(aliasFieldName, isKeyField);
-        aliasFieldName = setFieldCase(aliasFieldName);
-        aliasFieldName = addAffix(aliasFieldName, isKeyField);
         aliasFieldName = AddFieldDelimiter(aliasFieldName);
         fieldArray[i] = insertCommaIntoArrayValue(sourceFieldName + " AS " + aliasFieldName, fieldArray.length, i);
     }
@@ -427,13 +433,17 @@ function setFieldCase(pInputString) {
     return fieldString;
 }
 function applySubField(pIntputString) {
-    const SUB_FIELD_ARRAY = pIntputString.split(userSettings.subfieldSeparator);
-    if (userSettings.subfieldNo - 1 > SUB_FIELD_ARRAY.length || userSettings.subfieldNo - 1 === SUB_FIELD_ARRAY.length) {
-        return SUB_FIELD_ARRAY[0];
+    let str = pIntputString;
+    if (userSettings.subfieldSeparator.length > 0 || !isNaN(userSettings.subfieldNo)) {
+        const SUB_FIELD_ARRAY = pIntputString.split(userSettings.subfieldSeparator);
+        if (userSettings.subfieldNo - 1 > SUB_FIELD_ARRAY.length || userSettings.subfieldNo - 1 === SUB_FIELD_ARRAY.length) {
+            str = SUB_FIELD_ARRAY[0];
+        }
+        else {
+            str = SUB_FIELD_ARRAY[userSettings.subfieldNo - 1];
+        }
     }
-    else {
-        return SUB_FIELD_ARRAY[userSettings.subfieldNo - 1];
-    }
+    return str;
 }
 function toggleTheme() {
     if (userSettings.isDarkModeTheme) {
