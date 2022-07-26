@@ -448,11 +448,11 @@ function applySubField(pIntputString) {
 function toggleTheme() {
     if (userSettings.isDarkModeTheme) {
         document.getElementById("toggleTheme").value = "dark";
-        document.getElementById("toggleTheme").innerText = "Toggle Dark Mode";
+        document.getElementById("toggleTheme").innerText = "Toggle Light Mode";
     }
     else {
         document.getElementById("toggleTheme").value = "light";
-        document.getElementById("toggleTheme").innerText = "Toggle Light Mode";
+        document.getElementById("toggleTheme").innerText = "Toggle Dark Mode";
     }
     let tabElements = document.getElementsByClassName("tab");
     for (let i = 0; i < tabElements.length; i++) {

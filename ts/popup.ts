@@ -525,11 +525,11 @@ function toggleTheme(): any {
 
   if (userSettings.isDarkModeTheme) {
     (<HTMLButtonElement>document.getElementById("toggleTheme")).value = "dark";
-    (<HTMLButtonElement>document.getElementById("toggleTheme")).innerText = "Toggle Dark Mode";
+    (<HTMLButtonElement>document.getElementById("toggleTheme")).innerText = "Toggle Light Mode";
   }
   else {
     (<HTMLButtonElement>document.getElementById("toggleTheme")).value = "light";
-    (<HTMLButtonElement>document.getElementById("toggleTheme")).innerText = "Toggle Light Mode";
+    (<HTMLButtonElement>document.getElementById("toggleTheme")).innerText = "Toggle Dark Mode";
   }
 
   let tabElements = (<HTMLCollection>document.getElementsByClassName("tab"));
