@@ -7,7 +7,7 @@
 
 # What it does #
 
-![Alt Text](https://media.giphy.com/media/OczSymFXKg4y5Yoxv5/giphy.gif)
+![Alt Text](https://raw.githubusercontent.com/MichelLalancette/SenseFieldFormatter/main/media/DarkMode.png)(https://youtu.be/k3HQpJivyZM)
 
 Allows a user to format a list of fields, delimited by commas, into an alias and standardized format.
 
