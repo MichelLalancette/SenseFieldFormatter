@@ -89,7 +89,7 @@ e.g. Using the customer dimension where a customer may be a Ship To or Bill To c
 *Suffix :*
 **[Customer Name] -> [Customer Name.ShipTo]**
 
-***Affix:** The text that will be used as an affix. Make sure to add a spaceto your affix if you'd like the new string to remain spaced out.*
+***Affix:** The text that will be used as an affix. Make sure to add a space to your affix if you'd like the new string to remain spaced out.*
 
 
 ## License
