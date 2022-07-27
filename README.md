@@ -18,7 +18,7 @@ The user has multiple configuration options to choose from.
 When the extension icon is clicked, a popup menu is displayed where the formatting takes place and is pasted into the clipboard.
 
 # User Settings #
-### **Use Alias as field's source name** ###
+### **Use Alias as the field's source name** ###
 Will use the alias name (at the right of "AS") from your source fields as your new source fields.
 
 *e.g. [SourceField] AS [SourceAlias] -> [SourceAlias] AS [OutputAlias]*
@@ -35,7 +35,7 @@ Fields starting with the identified key will NOT be formatted.
 
 ## **Comma Position** ##
 
-Places the comma either at the start or end of line.
+Places the comma either at the start or end of the line.
 
 ## **Field Delimiter** ##
 
