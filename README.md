@@ -45,7 +45,7 @@ Should the field delimiters be double quotes or square brackets.
 
 ***Find what**: The character(s) you are looking to replace. Multiple characters can be replaced at once.*
 
-***Replace with*: Replace all occurences of the character(s) in the fields.**
+***Replace with*: Replace all occurrences of the character(s) in the fields.**
 
 ## **Insert a space before capitals** ##
 
