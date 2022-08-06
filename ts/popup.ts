@@ -144,9 +144,13 @@ function listenForClicks(): void {
       case "previewBtn": // If we press the submit button, perform the field formatting procedure and display in the preview without copying to clipboard
         return formatFieldsAndPreview();
       case "inputTab":
-        return changeTab(EVENTNAME, 'inputText');
+        return changeTab(EVENTNAME, 'inputText', 'tabcontent', 'tablinks');
       case "outputTab":
-        return changeTab(EVENTNAME, 'outputText');
+        return changeTab(EVENTNAME, 'outputText', 'tabcontent', 'tablinks');
+        case "settingsTab":
+          return changeTab(EVENTNAME, 'settingsContent', 'settingsTabContent', 'settingsTab');
+          case "advancedSettingsTab":
+            return changeTab(EVENTNAME, 'advancedSettingsContent', 'settingsTabContent', 'settingsTab');
     }
   });
 }
@@ -369,7 +373,7 @@ function assembleFieldAndAlias(pSourceFieldName: string, pAliasField: string): s
 
 function previewFormatting(formatOutput: string) {
   (<HTMLInputElement>document.getElementById("formattingOutput")).value = formatOutput;
-  changeTab((<HTMLInputElement>document.getElementById("outputTab")), 'outputText');
+  changeTab((<HTMLInputElement>document.getElementById("outputTab")), 'outputText', 'tabcontent', 'settingsTab');
 }
 
 function coalesce([]) {
@@ -559,15 +563,15 @@ function spaceOutCapitals(pInputString: string, pIsKeyField: boolean): string {
  * @param {HTMLInputElement} event The HTML Dom that triggered the action
  * @param {string} tabName The tab to set active
  */
-function changeTab(event: HTMLInputElement, tabName: string): void {
+function changeTab(event: HTMLInputElement, tabName: string, tabContentName: string, pTabName: string): void {
   // Get all elements with class="tabcontent" and hide them
-  let tabcontent = document.getElementsByClassName("tabcontent");
+  let tabcontent = document.getElementsByClassName(tabContentName);
   for (let i = 0; i < tabcontent.length; i++) {
     (<HTMLInputElement>tabcontent[i]).style.display = "none";
   }
 
   // Get all elements with class="tablinks" and remove the class "active"
-  let tablinks = document.getElementsByClassName("tablinks");
+  let tablinks = document.getElementsByClassName(pTabName);
   for (let i = 0; i < tablinks.length; i++) {
     tablinks[i].className = tablinks[i].className.replace(" active", "");
   }

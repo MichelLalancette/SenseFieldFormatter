@@ -16,9 +16,9 @@ class UserSettings {
         this.fieldAffixPosition = "doNothing";
         this.fieldAffixValue = "";
         this.useAliasAsSourceName = false;
+        this.isAliasOnly = false;
         this.isDarkModeTheme = true;
         this.isAlignAliases = false;
-        this.isCleanupOnly = false;
         this.isSortFields = false;
         this.isSortKeyFieldsOnly = false;
     }
@@ -49,7 +49,7 @@ function setUserSettings() {
     userSettings.fieldAffixValue = document.getElementById("fieldAffixText").value;
     userSettings.isDarkModeTheme = document.getElementById("toggleTheme").value === "dark" ? true : false;
     userSettings.isAlignAliases = false; // TODO
-    userSettings.isCleanupOnly = false;
+    userSettings.isAliasOnly = false;
     userSettings.isSortFields = false;
     userSettings.isSortKeyFieldsOnly = false;
 }
@@ -107,9 +107,13 @@ function listenForClicks() {
             case "previewBtn": // If we press the submit button, perform the field formatting procedure and display in the preview without copying to clipboard
                 return formatFieldsAndPreview();
             case "inputTab":
-                return changeTab(EVENTNAME, 'inputText');
+                return changeTab(EVENTNAME, 'inputText', 'tabcontent', 'tablinks');
             case "outputTab":
-                return changeTab(EVENTNAME, 'outputText');
+                return changeTab(EVENTNAME, 'outputText', 'tabcontent', 'tablinks');
+            case "settingsTab":
+                return changeTab(EVENTNAME, 'settingsContent', 'settingsTabContent', 'settingsTab');
+            case "advancedSettingsTab":
+                return changeTab(EVENTNAME, 'advancedSettingsContent', 'settingsTabContent', 'settingsTab');
         }
     });
 }
@@ -226,6 +230,7 @@ function formatInputFields() {
         fieldInfo = fieldInfo.slice(LOAD_STATEMENT_INDEX + LOAD_LABEL.length); // Remove the Load and keep everything to the end of string
     }
     let fromTableStatement = "";
+    // Check if the keywords Resident or From (case insensitive) are matched and not preceded directly by AS or a comma. This indicates it's a Table Load, not a field
     const SOURCE_TABLE_INDEX = fieldInfo.search(/\w*(?<!((as)|,)\s*)(?<!\["`)(From|Resident)\b(?![\w\s]*[\]"`])/gsi);
     if (SOURCE_TABLE_INDEX > -1) {
         fromTableStatement = fieldInfo.slice(SOURCE_TABLE_INDEX); // Take everyting up to the Load word
@@ -242,16 +247,7 @@ function formatInputFields() {
         myField.fieldOriginalName = e;
         fieldArrayObject.push(myField);
     });
-    // Cleanup the input fields before formatting
-    for (let i = 0; i < fieldArray.length; i++) {
-        if (userSettings.useAliasAsSourceName) {
-            fieldArray[i] = fieldArray[i].replace(/(.+\sAS\s+)/i, '');
-        } // (.+\sAS\s+) matches everything up to the AS part of the alias
-        else if (fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
-            fieldArray[i] = fieldArray[i].substring(0, fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
-        }
-        fieldArray[i] = removeDelimiter(fieldArray[i]);
-    }
+    fieldArray = cleanupFields(fieldArray); // Cleanup the input fields before formatting
     const MAX_ARRAY_FIELD_LENGTH = Math.max(...(fieldArray.map(el => el.length))); // Get the longest field name to align the aliases
     let sourceFieldName;
     let isKeyField;
@@ -285,9 +281,22 @@ function formatInputFields() {
     // Add commas to each row in the array
     // Formats the fields according to the user settings 
     // then transforms the array into a string with linebreaks between each record
-    return fieldArray.map((elem, i) => {
+    const newLocal = fieldArray.map((elem, i) => {
         return insertCommaIntoArrayValue(elem, fieldArray.length, i);
     }).join("\r\n");
+    return newLocal;
+}
+function cleanupFields(fieldArray) {
+    for (let i = 0; i < fieldArray.length; i++) {
+        if (userSettings.useAliasAsSourceName) {
+            fieldArray[i] = fieldArray[i].replace(/(.+\sAS\s+)/i, '');
+        } // (.+\sAS\s+) matches everything up to the AS part of the alias
+        else if (fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
+            fieldArray[i] = fieldArray[i].substring(0, fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+        }
+        fieldArray[i] = removeDelimiter(fieldArray[i]);
+    }
+    return fieldArray;
 }
 function sortArray(pFieldArray) {
     // objs.sort((a,b) => (a.last_nom > b.last_nom) ? 1 : ((b.last_nom > a.last_nom) ? -1 : 0))
@@ -302,11 +311,11 @@ function sortArray(pFieldArray) {
     return pFieldArray;
 }
 function assembleFieldAndAlias(pSourceFieldName, pAliasField) {
-    return userSettings.isCleanupOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
+    return userSettings.isAliasOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
 }
 function previewFormatting(formatOutput) {
     document.getElementById("formattingOutput").value = formatOutput;
-    changeTab(document.getElementById("outputTab"), 'outputText');
+    changeTab(document.getElementById("outputTab"), 'outputText', 'tabcontent', 'settingsTab');
 }
 function coalesce([]) {
     return [].find.call(arguments, x => x !== null && x !== undefined);
@@ -468,14 +477,14 @@ function spaceOutCapitals(pInputString, pIsKeyField) {
  * @param {HTMLInputElement} event The HTML Dom that triggered the action
  * @param {string} tabName The tab to set active
  */
-function changeTab(event, tabName) {
+function changeTab(event, tabName, tabContentName, pTabName) {
     // Get all elements with class="tabcontent" and hide them
-    let tabcontent = document.getElementsByClassName("tabcontent");
+    let tabcontent = document.getElementsByClassName(tabContentName);
     for (let i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
     // Get all elements with class="tablinks" and remove the class "active"
-    let tablinks = document.getElementsByClassName("tablinks");
+    let tablinks = document.getElementsByClassName(pTabName);
     for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
