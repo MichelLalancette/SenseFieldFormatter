@@ -16,13 +16,27 @@ class UserSettings {
         this.fieldAffixPosition = "doNothing";
         this.fieldAffixValue = "";
         this.useAliasAsSourceName = false;
+        this.isAliasOnly = false;
         this.isDarkModeTheme = true;
+        this.isAlignAliases = false;
+        this.fieldSortOrder = "doNothing";
+        this.keySourcePosition = "start";
+        this.keySourceIdentifier = "";
+        this.keyAliasPosition = "start";
+        this.keyAliasIdentifier = "";
+    }
+}
+class Field {
+    constructor() {
+        this.fieldOriginalName = "";
+        this.fieldSourceName = "";
+        this.fieldAliasName = "";
+        this.isKeyField = false;
     }
 }
 function setUserSettings() {
     userSettings.useAliasAsSourceName = document.getElementById("isSourceFieldAlias").checked;
     userSettings.isIgnoreFormatOnKeyField = document.getElementById("isIgnoreKeyField").checked;
-    userSettings.keyFieldIdentifier = document.getElementById("keyFieldIdentifier").value;
     userSettings.commaPosition = document.getElementById("commaPosition").value;
     userSettings.fieldDelimiter = document.getElementById("fieldDelimiter").value;
     userSettings.isReplaceChars = document.getElementById("isReplaceChars").checked;
@@ -34,13 +48,19 @@ function setUserSettings() {
     userSettings.subfieldSeparator = document.getElementById("subfieldSeparator").value;
     userSettings.subfieldNo = parseInt(document.getElementById("subfieldno").value);
     userSettings.fieldAffixPosition = document.getElementById("fieldAffixPosition").value;
-    userSettings.fieldAffixValue = document.getElementById("fieldAffixText").value;
+    // userSettings.fieldAffixValue = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
     userSettings.isDarkModeTheme = document.getElementById("toggleTheme").value === "dark" ? true : false;
+    userSettings.isAlignAliases = document.getElementById("alignAlias").checked;
+    userSettings.isAliasOnly = document.getElementById("isFormatOnly").checked;
+    userSettings.fieldSortOrder = document.getElementById("sortFields").value;
+    userSettings.keySourcePosition = document.getElementById("sourceKeyPosition").value;
+    userSettings.keySourceIdentifier = document.getElementById("sourceKeyIdentifier").value;
+    userSettings.keyAliasPosition = document.getElementById("aliasKeyPosition").value;
+    userSettings.keyAliasIdentifier = document.getElementById("aliasKeyIdentifier").value;
 }
 function setUserSettingsHTMLFields() {
     document.getElementById("isSourceFieldAlias").checked = userSettings.useAliasAsSourceName;
     document.getElementById("isIgnoreKeyField").checked = userSettings.isIgnoreFormatOnKeyField;
-    document.getElementById("keyFieldIdentifier").value = userSettings.keyFieldIdentifier;
     document.getElementById("commaPosition").value = userSettings.commaPosition;
     document.getElementById("fieldDelimiter").value = userSettings.fieldDelimiter;
     document.getElementById("isReplaceChars").checked = userSettings.isReplaceChars;
@@ -52,8 +72,15 @@ function setUserSettingsHTMLFields() {
     document.getElementById("subfieldSeparator").value = userSettings.subfieldSeparator;
     document.getElementById("subfieldno").value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
     document.getElementById("fieldAffixPosition").value = userSettings.fieldAffixPosition;
-    document.getElementById("fieldAffixText").value = userSettings.fieldAffixValue;
+    // (<HTMLInputElement>document.getElementById("fieldAffixText")).value = userSettings.fieldAffixValue;
     document.getElementById("toggleTheme").value = userSettings.isDarkModeTheme ? "dark" : "light";
+    document.getElementById("alignAlias").checked = userSettings.isAlignAliases;
+    document.getElementById("isFormatOnly").checked = userSettings.isAliasOnly;
+    document.getElementById("sortFields").value = userSettings.fieldSortOrder;
+    document.getElementById("sourceKeyPosition").value = userSettings.keySourcePosition;
+    document.getElementById("sourceKeyIdentifier").value = userSettings.keySourceIdentifier;
+    document.getElementById("aliasKeyPosition").value = userSettings.keyAliasPosition;
+    document.getElementById("aliasKeyIdentifier").value = userSettings.keyAliasIdentifier;
 }
 function saveUserSettings() {
     setUserSettings();
@@ -65,9 +92,9 @@ function saveUserSettings() {
  * Listen for clicks on the buttons, and performs the appropriate action.
  */
 function listenForClicks() {
-    document.getElementById("keyFieldIdentifier").addEventListener("input", (e) => {
-        toggleIgnoreOfKeyField();
-    });
+    // (<HTMLFormElement>document.getElementById("keyFieldIdentifier")).addEventListener("input", (e) => {
+    //   toggleIgnoreOfKeyField();
+    // });
     document.addEventListener("change", (e) => {
         saveUserSettings();
         toggleDisplayOfElements();
@@ -91,16 +118,20 @@ function listenForClicks() {
             case "previewBtn": // If we press the submit button, perform the field formatting procedure and display in the preview without copying to clipboard
                 return formatFieldsAndPreview();
             case "inputTab":
-                return changeTab(EVENTNAME, 'inputText');
+                return changeTab(EVENTNAME, 'inputText', 'tabcontent', 'tablinks');
             case "outputTab":
-                return changeTab(EVENTNAME, 'outputText');
+                return changeTab(EVENTNAME, 'outputText', 'tabcontent', 'tablinks');
+            case "settingsTab":
+                return changeTab(EVENTNAME, 'settingsContent', 'settingsTabContent', 'settingsTab');
+            case "advancedSettingsTab":
+                return changeTab(EVENTNAME, 'advancedSettingsContent', 'settingsTabContent', 'settingsTab');
         }
     });
 }
 function toggleIgnoreOfKeyField() {
-    document.getElementById("keyFieldIdentifier").value.length > 0 ?
-        document.getElementById("ignoreFormatKeyFieldLabel").style.display = ""
-        : document.getElementById("ignoreFormatKeyFieldLabel").style.display = "none";
+    // (<HTMLInputElement>document.getElementById("keyFieldIdentifier")).value.length > 0 ?
+    //   (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = ""
+    //   : (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = "none";
 }
 /**
  * Calls the toggle element functions to show/hide content in the page
@@ -179,58 +210,123 @@ function toggleCheckboxChildElements(pCheckboxId, pChildClassName) {
     }
 }
 function formatFieldsAndCopyToClipboard() {
-    const FORMATTED_OUTPUT = formatInputFields();
-    // Assigns the outputted fields into the clipboard 
-    storeOutputToClipboard(FORMATTED_OUTPUT);
+    try {
+        const FORMATTED_OUTPUT = formatInputFields();
+        // Assigns the outputted fields into the clipboard 
+        previewFormatting(FORMATTED_OUTPUT);
+        // Assigns the outputted fields into the clipboard 
+        storeOutputToClipboard(FORMATTED_OUTPUT);
+    }
+    catch (e) {
+        console.error(e);
+    }
 }
 function formatFieldsAndPreview() {
-    const FORMATTED_OUTPUT = formatInputFields();
-    // Assigns the outputted fields into the clipboard 
-    previewFormatting(FORMATTED_OUTPUT);
+    try {
+        const FORMATTED_OUTPUT = formatInputFields();
+        // Assigns the outputted fields into the clipboard 
+        previewFormatting(FORMATTED_OUTPUT);
+    }
+    catch (e) {
+        console.error(e);
+    }
 }
 function formatInputFields() {
+    let fieldInfo = document.getElementById("fieldInfo").value;
+    let loadStatement = "";
+    const LOAD_STATEMENT_INDEX = fieldInfo.search(/\w*(?<!,\s*)Load/gsi);
+    const LOAD_LABEL = 'Load';
+    if (LOAD_STATEMENT_INDEX > -1) {
+        loadStatement = fieldInfo.slice(0, LOAD_STATEMENT_INDEX + LOAD_LABEL.length); // Take everyting up to the Load word
+        fieldInfo = fieldInfo.slice(LOAD_STATEMENT_INDEX + LOAD_LABEL.length); // Remove the Load and keep everything to the end of string
+    }
+    let fromTableStatement = "";
+    // Check if the keywords Resident or From (case insensitive) are matched and not preceded directly by AS or a comma. This indicates it's a Table Load, not a field
+    const SOURCE_TABLE_INDEX = fieldInfo.search(/\w*(?<!((as)|,)\s*)(?<!\["`)(From|Resident)\b(?![\w\s]*[\]"`])/gsi);
+    if (SOURCE_TABLE_INDEX > -1) {
+        fromTableStatement = fieldInfo.slice(SOURCE_TABLE_INDEX); // Take everyting up to the Load word
+        fieldInfo = fieldInfo.slice(0, SOURCE_TABLE_INDEX); // Remove the Load and keep everything to the end of string
+    }
     // Split the string into an array for each line break, trim records, then remove empty rows
-    let fieldArray = document.getElementById("fieldInfo").value.split(/[\r\n\\]+/).map(s => s.trim()).filter(function (str) { return str; });
-    let aliasFieldName;
+    let fieldArray = fieldInfo
+        .split(/[\r\n\\]+/)
+        .map(s => s.trim())
+        .filter(function (str) { return str; });
+    let fieldArrayObject;
+    fieldArray.forEach(e => {
+        let myField = new Field();
+        myField.fieldOriginalName = e;
+        fieldArrayObject.push(myField);
+    });
+    fieldArray = cleanupFields(fieldArray); // Cleanup the input fields before formatting
+    const MAX_ARRAY_FIELD_LENGTH = Math.max(...(fieldArray.map(el => el.length))); // Get the longest field name to align the aliases
     let sourceFieldName;
     let isKeyField;
     for (let i = 0; i < fieldArray.length; i++) {
-        aliasFieldName = fieldArray[i];
-        if (userSettings.useAliasAsSourceName) {
-            aliasFieldName = aliasFieldName.replace(/(.+\sAS\s+)/i, '');
-        }
-        else if (aliasFieldName.search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) {
-            aliasFieldName = aliasFieldName.substring(0, aliasFieldName.search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
-        }
-        aliasFieldName = removeDelimiter(aliasFieldName);
-        sourceFieldName = AddFieldDelimiter(aliasFieldName); // Create the source field name by wrapping it with delimiters
-        isKeyField = fieldIsAKeyField(aliasFieldName); // Check if the key field is a key Identifier using the configuration
+        sourceFieldName = AddFieldDelimiter(fieldArray[i]); // Create the source field name by wrapping it with delimiters
+        isKeyField = fieldIsAKeyField(fieldArray[i]); // Check if the key field is a key Identifier using the configuration
         if (!isKeyField || (isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
             if (userSettings.isSubfieldFieldName) {
-                aliasFieldName = applySubField(aliasFieldName);
+                fieldArray[i] = applySubField(fieldArray[i]);
             }
             ;
             if (userSettings.isReplaceChars) {
-                aliasFieldName = replaceChars(aliasFieldName);
+                fieldArray[i] = replaceChars(fieldArray[i]);
             }
             // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
             if (userSettings.isSpaceOutCapitals) {
-                aliasFieldName = spaceOutCapitals(aliasFieldName, isKeyField);
+                fieldArray[i] = spaceOutCapitals(fieldArray[i], isKeyField);
             }
-            aliasFieldName = setFieldCase(aliasFieldName);
-            aliasFieldName = addAffix(aliasFieldName, isKeyField);
+            fieldArray[i] = addAffix(fieldArray[i], isKeyField);
+            fieldArray[i] = setFieldCase(fieldArray[i]);
         }
-        aliasFieldName = AddFieldDelimiter(aliasFieldName);
-        fieldArray[i] = insertCommaIntoArrayValue(sourceFieldName + " AS " + aliasFieldName, fieldArray.length, i);
+        fieldArray[i] = AddFieldDelimiter(fieldArray[i]);
+        // Align the "AS" used in aliasing so that all the aliases start at the same character index
+        if (userSettings.isAlignAliases) {
+            sourceFieldName = sourceFieldName.padEnd(MAX_ARRAY_FIELD_LENGTH + 2, ' ');
+        }
+        ;
+        fieldArray[i] = assembleFieldAndAlias(sourceFieldName, fieldArray[i]);
     }
-    const FORMATTED_OUTPUT = fieldArray.join("\r\n");
+    fieldArray = sortArray(fieldArray);
+    // Add commas to each row in the array
     // Formats the fields according to the user settings 
     // then transforms the array into a string with linebreaks between each record
-    return FORMATTED_OUTPUT;
+    const newLocal = fieldArray.map((elem, i) => {
+        return insertCommaIntoArrayValue(elem, fieldArray.length, i);
+    }).join("\r\n");
+    return newLocal;
+}
+function cleanupFields(fieldArray) {
+    for (let i = 0; i < fieldArray.length; i++) {
+        if (userSettings.useAliasAsSourceName) {
+            fieldArray[i] = fieldArray[i].replace(/(.+\sAS\s+)/i, '');
+        } // (.+\sAS\s+) matches everything up to the AS part of the alias
+        else if (fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
+            fieldArray[i] = fieldArray[i].substring(0, fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+        }
+        fieldArray[i] = removeDelimiter(fieldArray[i]);
+    }
+    return fieldArray;
+}
+function sortArray(pFieldArray) {
+    // objs.sort((a,b) => (a.last_nom > b.last_nom) ? 1 : ((b.last_nom > a.last_nom) ? -1 : 0))
+    if (userSettings.fieldSortOrder === "key") {
+        const KEY_FIELDS_ARRAY = pFieldArray.filter(e => e.startsWith(userSettings.fieldDelimiter + userSettings.keyFieldIdentifier)).sort();
+        const REGULAR_FIELDS_ARRAY = pFieldArray.filter(e => !e.startsWith(userSettings.fieldDelimiter + userSettings.keyFieldIdentifier));
+        pFieldArray = KEY_FIELDS_ARRAY.concat(REGULAR_FIELDS_ARRAY);
+    }
+    else if (userSettings.fieldSortOrder === "all") {
+        pFieldArray = pFieldArray.sort();
+    }
+    return pFieldArray;
+}
+function assembleFieldAndAlias(pSourceFieldName, pAliasField) {
+    return userSettings.isAliasOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
 }
 function previewFormatting(formatOutput) {
     document.getElementById("formattingOutput").value = formatOutput;
-    changeTab(document.getElementById("outputTab"), 'outputText');
+    changeTab(document.getElementById("outputTab"), 'outputText', 'tabcontent', 'settingsTab');
 }
 function coalesce([]) {
     return [].find.call(arguments, x => x !== null && x !== undefined);
@@ -392,14 +488,14 @@ function spaceOutCapitals(pInputString, pIsKeyField) {
  * @param {HTMLInputElement} event The HTML Dom that triggered the action
  * @param {string} tabName The tab to set active
  */
-function changeTab(event, tabName) {
+function changeTab(event, tabName, tabContentName, pTabName) {
     // Get all elements with class="tabcontent" and hide them
-    let tabcontent = document.getElementsByClassName("tabcontent");
+    let tabcontent = document.getElementsByClassName(tabContentName);
     for (let i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
     // Get all elements with class="tablinks" and remove the class "active"
-    let tablinks = document.getElementsByClassName("tablinks");
+    let tablinks = document.getElementsByClassName(pTabName);
     for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
