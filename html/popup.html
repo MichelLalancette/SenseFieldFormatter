@@ -142,10 +142,16 @@
               </label>
             </div>
           </div>
+          <div class="form-group" id="formatOnlySection"
+            title="Format only, do not alias anything. Some options will not work with this.">
+            <label class="label" for="sortFields"><input type="checkbox" name="isFormatOnly" class="checkbox" id="isFormatOnly">Format only, no aliasing
+              </label>
+          </div>
+          <hr>
           <div class="userConfig settingsTabContent SettingsContent" id="advancedSettingsContent" style="display: none;">
             <div class="form-group" id="primaryKeySection"
               title="Ignored key fields will NOT be formatted.&#10;Key fields always receive a field delimiter and comma position regardless of this setting.&#10;e.g. %MyKeyField will become [%Inventory.MyKeyField] if prefixing is enabled and the affix value is &quot;Inventory&quot;.">
-              <label class="option-label noindent keyField" style="font-size: 14px; font-weight:bold;">Key Identifier
+              <label class="option-label option-label-title noindent keyField">Key Identifier
                 Formatting</label>
               <br>
               <label class="label" for="isFormatKeyField" id="ignoreFormatKeyFieldLabel">
@@ -155,8 +161,8 @@
               <label class="option-label">Position:<select
                   title="The position of the source key. e.g. If ID is your source key, then UserID would be &quot;Ends With&quot;."
                   class="dropdown" id="sourceKeyPosition" name="sourceKeyPosition">
-                  <option value="lc">Starts With</option>
-                  <option value="tc">Ends With</option>
+                  <option value="start">Starts With</option>
+                  <option value="end">Ends With</option>
                 </select></label><br>
               <label class="option-label">Source Identifier:<input class="smallInput" name="aliasKeyFieldIdentifier"
                   id="aliasKeyFieldIdentifier" /></abel>
@@ -164,8 +170,8 @@
                 <label class="option-label">Position:<select
                     title="Will append a newly definied key to the alias. e.g. UserID -> %UserID would be &quot;Ends With&quot;."
                     class="dropdown" id="aliasKeyPosition" name="aliasKeyPosition">
-                    <option value="lc">Starts With</option>
-                    <option value="tc">Ends With</option>
+                    <option value="start">Starts With</option>
+                    <option value="end">Ends With</option>
                   </select></label>
                 <br><label class="option-label">Alias Identifier:<input class="smallInput" name="keyFieldIdentifier"
                     id="keyFieldIdentifier" /></label>

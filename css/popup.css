@@ -27,7 +27,9 @@
 .userConfig::-webkit-scrollbar-thumb {
     background: #22252B;
     -webkit-border-radius: 1ex;
+    border-radius: 1ex;
     -webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
 }
 
 .userConfig::-webkit-scrollbar-corner {
@@ -187,6 +189,11 @@
   .option-label {
     margin-left: 14px;
     color: #D7DAE0;
+  }
+
+  .option-label-title {
+    font-size: 14px; 
+    font-weight:bold;
   }
 
   .option-label-light {
