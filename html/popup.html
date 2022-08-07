@@ -60,12 +60,16 @@
             <textarea class="fieldTextInput" id="formattingOutput" name="formattingOutput" spellcheck="false"
               readonly></textarea>
           </div>
-          <div class="cell">
-            <div class="row">
+          <div class="cell">            
+          <div class="row row-submitarea" id="formatOnlySection"
+          title="Format only, do not alias anything. Some options will not work with this.">
+          <label class="label" for="isFormatOnly"><input type="checkbox" name="isFormatOnly" class="checkbox" id="isFormatOnly">Format only, no aliasing
+            </label>
+        </div>
+            <div class="row row-submitarea">
               <button class="button" name="previewBtn" value="previewFormat" type="button">Preview Output</button>
               <button class="button" name="submitBtn" value="transformText" type="button">Copy to clipboard</button>
             </div>
-            <label class="label" id="transformLbl" name="transformLbl" />
           </div>
         </form>
       </div>
@@ -87,7 +91,7 @@
             <div class="form-group" id="alignAliasSection"
               title="Should the aliases be aligned on the right-hand side.">
               <label class="label" for="alignAlias" id="alignAliasLabel">
-                <input type="checkbox" name="alignAlias" value="M" class="checkbox" id="alignAlias">
+                <input type="checkbox" name="alignAlias" class="checkbox" id="alignAlias">
                 Align Aliases</label>
             </div>
             <hr>
@@ -142,11 +146,6 @@
               </label>
             </div>
           </div>
-          <div class="form-group" id="formatOnlySection"
-            title="Format only, do not alias anything. Some options will not work with this.">
-            <label class="label" for="sortFields"><input type="checkbox" name="isFormatOnly" class="checkbox" id="isFormatOnly">Format only, no aliasing
-              </label>
-          </div>
           <hr>
           <div class="userConfig settingsTabContent SettingsContent" id="advancedSettingsContent" style="display: none;">
             <div class="form-group" id="primaryKeySection"
@@ -154,9 +153,6 @@
               <label class="option-label option-label-title noindent keyField">Key Identifier
                 Formatting</label>
               <br>
-              <label class="label" for="isFormatKeyField" id="ignoreFormatKeyFieldLabel">
-                <input type="checkbox" name="isFormatKeyField" value="M" class="checkbox" id="isIgnoreKeyField">
-                Ignore formatting on Key Fields?</label>
               <label class="label">Source Key:</label>
               <label class="option-label">Position:<select
                   title="The position of the source key. e.g. If ID is your source key, then UserID would be &quot;Ends With&quot;."
@@ -164,8 +160,8 @@
                   <option value="start">Starts With</option>
                   <option value="end">Ends With</option>
                 </select></label><br>
-              <label class="option-label">Source Identifier:<input class="smallInput" name="aliasKeyFieldIdentifier"
-                  id="aliasKeyFieldIdentifier" /></abel>
+              <label class="option-label">Source Identifier:<input class="smallInput" name="sourceKeyIdentifier"
+                  id="sourceKeyIdentifier" /></abel>
                 <label class="label">Append New Key to Alias:</label>
                 <label class="option-label">Position:<select
                     title="Will append a newly definied key to the alias. e.g. UserID -> %UserID would be &quot;Ends With&quot;."
@@ -173,8 +169,11 @@
                     <option value="start">Starts With</option>
                     <option value="end">Ends With</option>
                   </select></label>
-                <br><label class="option-label">Alias Identifier:<input class="smallInput" name="keyFieldIdentifier"
-                    id="keyFieldIdentifier" /></label>
+                <br><label class="option-label">Alias Identifier:<input class="smallInput" name="aliasKeyIdentifier"
+                    id="aliasKeyIdentifier" /></label>
+                    <label class="label" for="isFormatKeyField" id="ignoreFormatKeyFieldLabel">
+                      <input type="checkbox" name="isFormatKeyField" value="M" class="checkbox" id="isIgnoreKeyField">
+                      Ignore formatting on Key Fields?</label>
             </div>
             <hr>
             <div class="form-group" id="fieldReplaceChars"
@@ -213,9 +212,9 @@
               title="Whether the fields are unchanged, sorted by key fields (identified via another setting) or all sorted Alphabetically.">
               <label class="label" for="sortFields">Sort Fields:
                 <select title="sortFields" class="dropdown" id="sortFields" name="sortFields">
-                  <option value="lc">--</option>
-                  <option value="lc">Sort Key Fields</option>
-                  <option value="tc">Sort Alphabetically</label>
+                  <option value="doNothing">--</option>
+                  <option value="key">Sort Key Fields</option>
+                  <option value="all">Sort Alphabetically</label>
               </select></label>
             </div>
           </div>

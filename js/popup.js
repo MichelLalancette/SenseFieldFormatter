@@ -19,8 +19,11 @@ class UserSettings {
         this.isAliasOnly = false;
         this.isDarkModeTheme = true;
         this.isAlignAliases = false;
-        this.isSortFields = false;
-        this.isSortKeyFieldsOnly = false;
+        this.fieldSortOrder = "doNothing";
+        this.keySourcePosition = "start";
+        this.keySourceIdentifier = "";
+        this.keyAliasPosition = "start";
+        this.keyAliasIdentifier = "";
     }
 }
 class Field {
@@ -34,7 +37,6 @@ class Field {
 function setUserSettings() {
     userSettings.useAliasAsSourceName = document.getElementById("isSourceFieldAlias").checked;
     userSettings.isIgnoreFormatOnKeyField = document.getElementById("isIgnoreKeyField").checked;
-    userSettings.keyFieldIdentifier = document.getElementById("keyFieldIdentifier").value;
     userSettings.commaPosition = document.getElementById("commaPosition").value;
     userSettings.fieldDelimiter = document.getElementById("fieldDelimiter").value;
     userSettings.isReplaceChars = document.getElementById("isReplaceChars").checked;
@@ -46,17 +48,19 @@ function setUserSettings() {
     userSettings.subfieldSeparator = document.getElementById("subfieldSeparator").value;
     userSettings.subfieldNo = parseInt(document.getElementById("subfieldno").value);
     userSettings.fieldAffixPosition = document.getElementById("fieldAffixPosition").value;
-    userSettings.fieldAffixValue = document.getElementById("fieldAffixText").value;
+    // userSettings.fieldAffixValue = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
     userSettings.isDarkModeTheme = document.getElementById("toggleTheme").value === "dark" ? true : false;
-    userSettings.isAlignAliases = false; // TODO
-    userSettings.isAliasOnly = false;
-    userSettings.isSortFields = false;
-    userSettings.isSortKeyFieldsOnly = false;
+    userSettings.isAlignAliases = document.getElementById("alignAlias").checked;
+    userSettings.isAliasOnly = document.getElementById("isFormatOnly").checked;
+    userSettings.fieldSortOrder = document.getElementById("sortFields").value;
+    userSettings.keySourcePosition = document.getElementById("sourceKeyPosition").value;
+    userSettings.keySourceIdentifier = document.getElementById("sourceKeyIdentifier").value;
+    userSettings.keyAliasPosition = document.getElementById("aliasKeyPosition").value;
+    userSettings.keyAliasIdentifier = document.getElementById("aliasKeyIdentifier").value;
 }
 function setUserSettingsHTMLFields() {
     document.getElementById("isSourceFieldAlias").checked = userSettings.useAliasAsSourceName;
     document.getElementById("isIgnoreKeyField").checked = userSettings.isIgnoreFormatOnKeyField;
-    document.getElementById("keyFieldIdentifier").value = userSettings.keyFieldIdentifier;
     document.getElementById("commaPosition").value = userSettings.commaPosition;
     document.getElementById("fieldDelimiter").value = userSettings.fieldDelimiter;
     document.getElementById("isReplaceChars").checked = userSettings.isReplaceChars;
@@ -68,8 +72,15 @@ function setUserSettingsHTMLFields() {
     document.getElementById("subfieldSeparator").value = userSettings.subfieldSeparator;
     document.getElementById("subfieldno").value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
     document.getElementById("fieldAffixPosition").value = userSettings.fieldAffixPosition;
-    document.getElementById("fieldAffixText").value = userSettings.fieldAffixValue;
+    // (<HTMLInputElement>document.getElementById("fieldAffixText")).value = userSettings.fieldAffixValue;
     document.getElementById("toggleTheme").value = userSettings.isDarkModeTheme ? "dark" : "light";
+    document.getElementById("alignAlias").checked = userSettings.isAlignAliases;
+    document.getElementById("isFormatOnly").checked = userSettings.isAliasOnly;
+    document.getElementById("sortFields").value = userSettings.fieldSortOrder;
+    document.getElementById("sourceKeyPosition").value = userSettings.keySourcePosition;
+    document.getElementById("sourceKeyIdentifier").value = userSettings.keySourceIdentifier;
+    document.getElementById("aliasKeyPosition").value = userSettings.keyAliasPosition;
+    document.getElementById("aliasKeyIdentifier").value = userSettings.keyAliasIdentifier;
 }
 function saveUserSettings() {
     setUserSettings();
@@ -81,9 +92,9 @@ function saveUserSettings() {
  * Listen for clicks on the buttons, and performs the appropriate action.
  */
 function listenForClicks() {
-    document.getElementById("keyFieldIdentifier").addEventListener("input", (e) => {
-        toggleIgnoreOfKeyField();
-    });
+    // (<HTMLFormElement>document.getElementById("keyFieldIdentifier")).addEventListener("input", (e) => {
+    //   toggleIgnoreOfKeyField();
+    // });
     document.addEventListener("change", (e) => {
         saveUserSettings();
         toggleDisplayOfElements();
@@ -118,9 +129,9 @@ function listenForClicks() {
     });
 }
 function toggleIgnoreOfKeyField() {
-    document.getElementById("keyFieldIdentifier").value.length > 0 ?
-        document.getElementById("ignoreFormatKeyFieldLabel").style.display = ""
-        : document.getElementById("ignoreFormatKeyFieldLabel").style.display = "none";
+    // (<HTMLInputElement>document.getElementById("keyFieldIdentifier")).value.length > 0 ?
+    //   (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = ""
+    //   : (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = "none";
 }
 /**
  * Calls the toggle element functions to show/hide content in the page
@@ -300,12 +311,12 @@ function cleanupFields(fieldArray) {
 }
 function sortArray(pFieldArray) {
     // objs.sort((a,b) => (a.last_nom > b.last_nom) ? 1 : ((b.last_nom > a.last_nom) ? -1 : 0))
-    if (userSettings.isSortFields && userSettings.isSortKeyFieldsOnly) {
+    if (userSettings.fieldSortOrder === "key") {
         const KEY_FIELDS_ARRAY = pFieldArray.filter(e => e.startsWith(userSettings.fieldDelimiter + userSettings.keyFieldIdentifier)).sort();
         const REGULAR_FIELDS_ARRAY = pFieldArray.filter(e => !e.startsWith(userSettings.fieldDelimiter + userSettings.keyFieldIdentifier));
         pFieldArray = KEY_FIELDS_ARRAY.concat(REGULAR_FIELDS_ARRAY);
     }
-    else if (userSettings.isSortFields) {
+    else if (userSettings.fieldSortOrder === "all") {
         pFieldArray = pFieldArray.sort();
     }
     return pFieldArray;

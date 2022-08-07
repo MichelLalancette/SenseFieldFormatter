@@ -17,8 +17,11 @@ class UserSettings {
   public subfieldNo: number;
   public isAlignAliases: boolean;
   public isAliasOnly: boolean;
-  public isSortFields: boolean;
-  public isSortKeyFieldsOnly: boolean;
+  public fieldSortOrder: string;
+  public keySourcePosition: string;
+  public keySourceIdentifier: string;
+  public keyAliasPosition: string;
+  public keyAliasIdentifier: string;
 
   constructor() {
     this.isIgnoreFormatOnKeyField = false;
@@ -39,8 +42,11 @@ class UserSettings {
     this.isAliasOnly = false;
     this.isDarkModeTheme = true;
     this.isAlignAliases = false;
-    this.isSortFields = false;
-    this.isSortKeyFieldsOnly = false;
+    this.fieldSortOrder = "doNothing";
+    this.keySourcePosition = "start"
+    this.keySourceIdentifier = ""
+    this.keyAliasPosition = "start"
+    this.keyAliasIdentifier = ""
   }
 }
 
@@ -62,7 +68,6 @@ class Field {
 function setUserSettings(): void {
   userSettings.useAliasAsSourceName = (<HTMLInputElement>document.getElementById("isSourceFieldAlias")).checked;
   userSettings.isIgnoreFormatOnKeyField = (<HTMLInputElement>document.getElementById("isIgnoreKeyField")).checked;
-  userSettings.keyFieldIdentifier = (<HTMLInputElement>document.getElementById("keyFieldIdentifier")).value;
   userSettings.commaPosition = (<HTMLInputElement>document.getElementById("commaPosition")).value;
   userSettings.fieldDelimiter = (<HTMLInputElement>document.getElementById("fieldDelimiter")).value;
   userSettings.isReplaceChars = (<HTMLInputElement>document.getElementById("isReplaceChars")).checked;
@@ -74,18 +79,21 @@ function setUserSettings(): void {
   userSettings.subfieldSeparator = (<HTMLInputElement>document.getElementById("subfieldSeparator")).value;
   userSettings.subfieldNo = parseInt((<HTMLInputElement>document.getElementById("subfieldno")).value);
   userSettings.fieldAffixPosition = (<HTMLInputElement>document.getElementById("fieldAffixPosition")).value;
-  userSettings.fieldAffixValue = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
+  // userSettings.fieldAffixValue = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
   userSettings.isDarkModeTheme = (<HTMLButtonElement>document.getElementById("toggleTheme")).value === "dark" ? true : false;
-  userSettings.isAlignAliases = false; // TODO
-  userSettings.isAliasOnly = false;
-  userSettings.isSortFields = false;
-  userSettings.isSortKeyFieldsOnly = false;
+  userSettings.isAlignAliases = (<HTMLInputElement>document.getElementById("alignAlias")).checked;
+  userSettings.isAliasOnly = (<HTMLInputElement>document.getElementById("isFormatOnly")).checked;
+  userSettings.fieldSortOrder = (<HTMLInputElement>document.getElementById("sortFields")).value;
+
+  userSettings.keySourcePosition = (<HTMLInputElement>document.getElementById("sourceKeyPosition")).value;
+  userSettings.keySourceIdentifier = (<HTMLInputElement>document.getElementById("sourceKeyIdentifier")).value;
+  userSettings.keyAliasPosition = (<HTMLInputElement>document.getElementById("aliasKeyPosition")).value;
+  userSettings.keyAliasIdentifier = (<HTMLInputElement>document.getElementById("aliasKeyIdentifier")).value;
 }
 
 function setUserSettingsHTMLFields() {
   (<HTMLInputElement>document.getElementById("isSourceFieldAlias")).checked = userSettings.useAliasAsSourceName;
   (<HTMLInputElement>document.getElementById("isIgnoreKeyField")).checked = userSettings.isIgnoreFormatOnKeyField;
-  (<HTMLInputElement>document.getElementById("keyFieldIdentifier")).value = userSettings.keyFieldIdentifier;
   (<HTMLInputElement>document.getElementById("commaPosition")).value = userSettings.commaPosition;
   (<HTMLInputElement>document.getElementById("fieldDelimiter")).value = userSettings.fieldDelimiter;
   (<HTMLInputElement>document.getElementById("isReplaceChars")).checked = userSettings.isReplaceChars;
@@ -97,8 +105,15 @@ function setUserSettingsHTMLFields() {
   (<HTMLInputElement>document.getElementById("subfieldSeparator")).value = userSettings.subfieldSeparator;
   (<HTMLInputElement>document.getElementById("subfieldno")).value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
   (<HTMLInputElement>document.getElementById("fieldAffixPosition")).value = userSettings.fieldAffixPosition;
-  (<HTMLInputElement>document.getElementById("fieldAffixText")).value = userSettings.fieldAffixValue;
+  // (<HTMLInputElement>document.getElementById("fieldAffixText")).value = userSettings.fieldAffixValue;
   (<HTMLInputElement>document.getElementById("toggleTheme")).value = userSettings.isDarkModeTheme ? "dark" : "light";
+  (<HTMLInputElement>document.getElementById("alignAlias")).checked = userSettings.isAlignAliases;
+  (<HTMLInputElement>document.getElementById("isFormatOnly")).checked = userSettings.isAliasOnly;
+  (<HTMLInputElement>document.getElementById("sortFields")).value = userSettings.fieldSortOrder;
+  (<HTMLInputElement>document.getElementById("sourceKeyPosition")).value = userSettings.keySourcePosition;
+  (<HTMLInputElement>document.getElementById("sourceKeyIdentifier")).value = userSettings.keySourceIdentifier;
+  (<HTMLInputElement>document.getElementById("aliasKeyPosition")).value = userSettings.keyAliasPosition;
+  (<HTMLInputElement>document.getElementById("aliasKeyIdentifier")).value = userSettings.keyAliasIdentifier;
 }
 
 function saveUserSettings(): void {
@@ -113,9 +128,9 @@ function saveUserSettings(): void {
  * Listen for clicks on the buttons, and performs the appropriate action.
  */
 function listenForClicks(): void {
-  (<HTMLFormElement>document.getElementById("keyFieldIdentifier")).addEventListener("input", (e) => {
-    toggleIgnoreOfKeyField();
-  });
+  // (<HTMLFormElement>document.getElementById("keyFieldIdentifier")).addEventListener("input", (e) => {
+  //   toggleIgnoreOfKeyField();
+  // });
 
   document.addEventListener("change", (e) => {
     saveUserSettings();
@@ -156,9 +171,9 @@ function listenForClicks(): void {
 }
 
 function toggleIgnoreOfKeyField() {
-  (<HTMLInputElement>document.getElementById("keyFieldIdentifier")).value.length > 0 ?
-    (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = ""
-    : (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = "none";
+  // (<HTMLInputElement>document.getElementById("keyFieldIdentifier")).value.length > 0 ?
+  //   (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = ""
+  //   : (<HTMLFormElement>document.getElementById("ignoreFormatKeyFieldLabel")).style.display = "none";
 }
 
 /**
@@ -357,11 +372,11 @@ function cleanupFields(fieldArray: string[]) {
 
 function sortArray(pFieldArray: string[]): string[] {
   // objs.sort((a,b) => (a.last_nom > b.last_nom) ? 1 : ((b.last_nom > a.last_nom) ? -1 : 0))
-  if (userSettings.isSortFields && userSettings.isSortKeyFieldsOnly) {
+  if (userSettings.fieldSortOrder === "key") {
     const KEY_FIELDS_ARRAY: string[] = pFieldArray.filter(e => e.startsWith(userSettings.fieldDelimiter + userSettings.keyFieldIdentifier)).sort();
     const REGULAR_FIELDS_ARRAY: string[] = pFieldArray.filter(e => !e.startsWith(userSettings.fieldDelimiter + userSettings.keyFieldIdentifier));
     pFieldArray = KEY_FIELDS_ARRAY.concat(REGULAR_FIELDS_ARRAY);
-  } else if (userSettings.isSortFields) {
+  } else if (userSettings.fieldSortOrder === "all") {
     pFieldArray = pFieldArray.sort();
   }
   return pFieldArray;
