@@ -2,6 +2,7 @@
     margin: 0;
     max-width: 700px;
     width: 700px;
+    max-height: 600px;
   }
 
   header {
@@ -254,6 +255,10 @@
     color: #393A42;
   }
 
+  .settingsTab-label {
+    cursor:default !important;
+  }
+
   .dropdown {
     background-color: #282C34;
     color: #D7DAE0;
@@ -305,4 +310,32 @@
     background: #00f0;
     border-style: none;
     cursor: pointer;
+  }
+
+  .tab label {
+    background-color: inherit;
+    float: left;
+    /* border: none; */
+    outline: none;
+    cursor: pointer;
+    padding: 7px 8px;
+    transition: 0.3s;
+    width: 25%;
+    background-color: #343742;
+    color: #767882;
+    font-weight: bold;
+    border: none;
+    border-top: solid;
+    border-color: #009845;
+    color: #D7DAE0;
+  }
+
+  .tablight button {
+    border-color: #009845;
+    color: #393A42;
+  }
+
+  .tablight label {
+    background-color: #F3F3F3;
+    color: #b6b6b6;
   }

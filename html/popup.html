@@ -60,12 +60,13 @@
             <textarea class="fieldTextInput" id="formattingOutput" name="formattingOutput" spellcheck="false"
               readonly></textarea>
           </div>
-          <div class="cell">            
-          <div class="row row-submitarea" id="formatOnlySection"
-          title="Format only, do not alias anything. Some options will not work with this.">
-          <label class="label" for="isFormatOnly"><input type="checkbox" name="isFormatOnly" class="checkbox" id="isFormatOnly">Format only, no aliasing
-            </label>
-        </div>
+          <div class="cell">
+            <div class="row row-submitarea" id="formatOnlySection"
+              title="Format only, do not alias anything. Some options will not work with this.">
+              <label class="label" for="isFormatOnly"><input type="checkbox" name="isFormatOnly" class="checkbox"
+                  id="isFormatOnly">Format only, no aliasing
+              </label>
+            </div>
             <div class="row row-submitarea">
               <button class="button" name="previewBtn" value="previewFormat" type="button">Preview Output</button>
               <button class="button" name="submitBtn" value="transformText" type="button">Copy to clipboard</button>
@@ -76,8 +77,9 @@
       <div class="cell">
         <form class="form" name="configuration">
           <div class="tab">
-            <button type="button" class="settingsTab active" name="settingsTab" id="settingsTab">Settings</button>
-            <button type="button" class="settingsTab" name="advancedSettingsTab" id="advancedSettingsTab">Advanced</button>
+            <button type="button" class="settingsTab settingsTab-label active" name="settingsTab"
+              id="settingsTab">Settings</button>
+            <!-- Reusing a button style tab as a title. May end up as multiple tabs -->
           </div>
           <div class="userConfig settingsTabContent SettingsContent" id="settingsContent">
             <div>
@@ -132,22 +134,6 @@
                 </select></label>
             </div>
             <hr>
-            <div class="form-group" id="fieldAffixSection"
-              title="Use to add text before or after every field. (Prefix.FieldName) or (FieldName.Suffix)">
-              <label class="label" for="fieldAffixPosition">
-                Add Suffix/Prefix?
-                <select class="dropdown" id="fieldAffixPosition" name="fieldAffixPosition" title="fieldAffixPosition">
-                  <option value="doNothing">--</option>
-                  <option value="prefix">Prefix</option>
-                  <option value="suffix">Suffix</option>
-                </select></label>
-              <label class="option-label fieldAffix" for="suffixField">Affix:
-                <input class="smallInput smallInput-wide" name="fieldAffixText" id="fieldAffixText" />
-              </label>
-            </div>
-          </div>
-          <hr>
-          <div class="userConfig settingsTabContent SettingsContent" id="advancedSettingsContent" style="display: none;">
             <div class="form-group" id="primaryKeySection"
               title="Ignored key fields will NOT be formatted.&#10;Key fields always receive a field delimiter and comma position regardless of this setting.&#10;e.g. %MyKeyField will become [%Inventory.MyKeyField] if prefixing is enabled and the affix value is &quot;Inventory&quot;.">
               <label class="option-label option-label-title noindent keyField">Key Identifier
@@ -171,9 +157,33 @@
                   </select></label>
                 <br><label class="option-label">Alias Identifier:<input class="smallInput" name="aliasKeyIdentifier"
                     id="aliasKeyIdentifier" /></label>
-                    <label class="label" for="isFormatKeyField" id="ignoreFormatKeyFieldLabel">
-                      <input type="checkbox" name="isFormatKeyField" value="M" class="checkbox" id="isIgnoreKeyField">
-                      Ignore formatting on Key Fields?</label>
+                <label class="label" for="isFormatKeyField" id="ignoreFormatKeyFieldLabel">
+                  <input type="checkbox" name="isFormatKeyField" value="M" class="checkbox" id="isIgnoreKeyField">
+                  Ignore formatting on Key Fields?</label>
+            </div>
+            <hr>
+            <div class="form-group" id="sortFieldsSection"
+              title="Whether the fields are unchanged, sorted by key fields (identified via another setting) or all sorted Alphabetically.">
+              <label class="label" for="sortFields">Sort Fields by Alias:
+                <select title="sortFields" class="dropdown" id="sortFields" name="sortFields">
+                  <option value="doNothing">--</option>
+                  <option value="key">Sort Key Fields</option>
+                  <option value="all">Sort Alphabetically</label>
+              </select></label>
+            </div>
+            <hr>
+            <div class="form-group" id="fieldAffixSection"
+              title="Use to add text before or after every field. (Prefix.FieldName) or (FieldName.Suffix)">
+              <label class="label" for="fieldAffixPosition">
+                Add Suffix/Prefix?
+                <select class="dropdown" id="fieldAffixPosition" name="fieldAffixPosition" title="fieldAffixPosition">
+                  <option value="doNothing">--</option>
+                  <option value="prefix">Prefix</option>
+                  <option value="suffix">Suffix</option>
+                </select></label>
+              <label class="option-label fieldAffix" for="suffixField">Affix:
+                <input class="smallInput smallInput-wide" name="fieldAffixText" id="fieldAffixText" />
+              </label>
             </div>
             <hr>
             <div class="form-group" id="fieldReplaceChars"
@@ -206,16 +216,6 @@
                 <label class="option-label subField" for="subfieldno">Field no:
                   <input class="smallInput" name="subfieldno" id="subfieldno" maxlength="2" /></label>
               </div>
-            </div>
-            <hr>
-            <div class="form-group" id="sortFieldsSection"
-              title="Whether the fields are unchanged, sorted by key fields (identified via another setting) or all sorted Alphabetically.">
-              <label class="label" for="sortFields">Sort Fields:
-                <select title="sortFields" class="dropdown" id="sortFields" name="sortFields">
-                  <option value="doNothing">--</option>
-                  <option value="key">Sort Key Fields</option>
-                  <option value="all">Sort Alphabetically</label>
-              </select></label>
             </div>
           </div>
         </form>
