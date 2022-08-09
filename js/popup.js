@@ -262,9 +262,10 @@ function formatInputFields() {
     let fieldArrayObject = new Array();
     fieldArray.forEach(e => {
         let sourceField = new Field();
-        sourceField.fieldSourceName = AddFieldDelimiter(e).padEnd(userSettings.isAlignAliases ? MAX_ARRAY_FIELD_LENGTH + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
-        sourceField.fieldAliasName = e;
-        sourceField.isKeyField = fieldIsAKeyField(e); // Check if the key field is a key Identifier using the configuration
+        const fieldName = e.trim();
+        sourceField.fieldSourceName = AddFieldDelimiter(fieldName).padEnd(userSettings.isAlignAliases ? MAX_ARRAY_FIELD_LENGTH + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
+        sourceField.fieldAliasName = fieldName;
+        sourceField.isKeyField = fieldIsAKeyField(fieldName); // Check if the key field is a key Identifier using the configuration
         fieldArrayObject.push(sourceField);
     });
     for (let i = 0; i < fieldArrayObject.length; i++) {
@@ -287,6 +288,9 @@ function formatInputFields() {
             }
             ;
         }
+        else {
+            fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName);
+        }
         fieldArrayObject[i].fieldAliasName = AddFieldDelimiter(fieldArrayObject[i].fieldAliasName);
     }
     let fieldsOutput = new Array();
@@ -300,51 +304,55 @@ function formatInputFields() {
     // then transforms the array into a string with linebreaks between each record
     return fieldsOutput.join("\r\n");
 }
-function fieldArrayObjectToArrayOfString(fieldArrayObject) {
+function fieldArrayObjectToArrayOfString(pFieldArrayObject) {
     let fieldArrayStrings = new Array();
-    for (let i = 0; i < fieldArrayObject.length; i++) {
-        fieldArrayStrings.push(fieldArrayObject[i].getFieldNameWithAlias());
+    for (let i = 0; i < pFieldArrayObject.length; i++) {
+        fieldArrayStrings.push(pFieldArrayObject[i].getFieldNameWithAlias());
     }
     return fieldArrayStrings;
 }
-function extractFromSection(fieldInfo) {
-    const SOURCE_TABLE_INDEX = fieldInfo.search(/\w*(?<!((as)|,)\s*)(?<!\["`)(From|Resident)\b(?![\w\s]*[\]"`])/gsi);
+function extractFromSection(pFieldInfo) {
+    const SOURCE_TABLE_INDEX = pFieldInfo.search(/\w*(?<!((as)|,)\s*)(?<!\["`)(From|Resident)\b(?![\w\s]*[\]"`])/gsi);
     let fromTableStatement = "";
     if (SOURCE_TABLE_INDEX > -1) {
-        fromTableStatement = fieldInfo.slice(SOURCE_TABLE_INDEX).trimEnd(); // Take everyting up to the Load word
-        fieldInfo = fieldInfo.slice(0, SOURCE_TABLE_INDEX); // Remove the Load and keep everything to the end of string
+        fromTableStatement = pFieldInfo.slice(SOURCE_TABLE_INDEX).trimEnd(); // Take everyting up to the Load word
+        pFieldInfo = pFieldInfo.slice(0, SOURCE_TABLE_INDEX); // Remove the Load and keep everything to the end of string
     }
-    return { fieldInfo, fromTableStatement };
+    return { fieldInfo: pFieldInfo, fromTableStatement };
 }
-function extractLoadSection(fieldInfo) {
-    const LOAD_STATEMENT_INDEX = fieldInfo.search(/\w*(?<!,\s*)Load/gsi);
+function extractLoadSection(pFieldInfo) {
+    const LOAD_STATEMENT_INDEX = pFieldInfo.search(/\w*(?<!,\s*)Load/gsi);
     const LOAD_LABEL = 'Load';
     let loadStatement = "";
     if (LOAD_STATEMENT_INDEX > -1) {
-        loadStatement = fieldInfo.slice(0, LOAD_STATEMENT_INDEX + LOAD_LABEL.length).trimStart(); // Take everyting up to the Load word
-        fieldInfo = fieldInfo.slice(LOAD_STATEMENT_INDEX + LOAD_LABEL.length); // Remove the Load and keep everything to the end of string
+        loadStatement = pFieldInfo.slice(0, LOAD_STATEMENT_INDEX + LOAD_LABEL.length).trimStart(); // Take everyting up to the Load word
+        pFieldInfo = pFieldInfo.slice(LOAD_STATEMENT_INDEX + LOAD_LABEL.length); // Remove the Load and keep everything to the end of string
     }
-    return { fieldInfo, loadStatement };
+    return { fieldInfo: pFieldInfo, loadStatement };
 }
-function cleanupFields(fieldArray) {
-    for (let i = 0; i < fieldArray.length; i++) {
+function cleanupFields(pFieldArray) {
+    for (let i = 0; i < pFieldArray.length; i++) {
         if (userSettings.useAliasAsSourceName) {
-            fieldArray[i] = fieldArray[i].replace(/(.+\sAS\s+)/i, '');
+            pFieldArray[i] = pFieldArray[i].replace(/(.+\sAS\s+)/i, '');
         } // (.+\sAS\s+) matches everything up to the AS part of the alias
-        else if (fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
-            fieldArray[i] = fieldArray[i].substring(0, fieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+        else if (pFieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
+            pFieldArray[i] = pFieldArray[i].substring(0, pFieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
         }
-        fieldArray[i] = removeDelimiter(fieldArray[i]);
+        pFieldArray[i] = removeDelimiter(pFieldArray[i]);
     }
-    return fieldArray;
+    return pFieldArray;
 }
 function sortArray(pFieldArray) {
     if (userSettings.fieldSortOrder === "key") {
-        pFieldArray = pFieldArray.sort((a, b) => (a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1 : ((b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1 : 0));
+        pFieldArray = pFieldArray.sort((a, b) => a.isKeyField && !b.isKeyField ? -1 : !a.isKeyField && b.isKeyField ? 1
+            : (a.isKeyField && b.isKeyField && a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1
+                : (a.isKeyField && b.isKeyField && b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1
+                    : 0);
     }
     else if (userSettings.fieldSortOrder === "all") {
-        // pFieldArray = pFieldArray.sort();
-        pFieldArray = pFieldArray.sort((a, b) => (a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1 : ((b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1 : 0));
+        pFieldArray = pFieldArray.sort((a, b) => (a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1
+            : ((b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1
+                : 0));
     }
     return pFieldArray;
 }
@@ -353,7 +361,7 @@ function assembleFieldAndAlias(pSourceFieldName, pAliasField) {
 }
 function previewFormatting(formatOutput) {
     document.getElementById("formattingOutput").value = formatOutput;
-    changeTab(document.getElementById("outputTab"), 'outputText', 'tabcontent', 'settingsTab');
+    changeTab(document.getElementById("outputTab"), 'outputText', 'tabcontent', 'tablinks');
 }
 function coalesce([]) {
     return [].find.call(arguments, x => x !== null && x !== undefined);
@@ -511,21 +519,21 @@ function spaceOutCapitals(pInputString) {
 /**
  * Changes which tab is active in the page, showing the active one's content and hidding the inactive's.
  * @param {HTMLInputElement} event The HTML Dom that triggered the action
- * @param {string} tabName The tab to set active
+ * @param {string} pContentId The tab to set active
  */
-function changeTab(event, tabName, tabContentName, pTabName) {
+function changeTab(event, pContentId, tabContentName, tabClassName) {
     // Get all elements with class="tabcontent" and hide them
     let tabcontent = document.getElementsByClassName(tabContentName);
     for (let i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
     // Get all elements with class="tablinks" and remove the class "active"
-    let tablinks = document.getElementsByClassName(pTabName);
+    let tablinks = document.getElementsByClassName(tabClassName);
     for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
     // Show the current tab, and add an "active" class to the button that opened the tab
-    document.getElementById(tabName).style.display = "block";
+    document.getElementById(pContentId).style.display = "block";
     event.className += " active";
 }
 function replaceChars(pInputString) {
@@ -566,8 +574,8 @@ function applySubField(pIntputString) {
     }
     return str;
 }
-function addKeyAffixToAlias(fieldAliasName) {
-    return userSettings.keyAliasPosition === "start" ? userSettings.keyAliasIdentifier + fieldAliasName : fieldAliasName + userSettings.keyAliasIdentifier;
+function addKeyAffixToAlias(pFieldAliasName) {
+    return userSettings.keyAliasPosition === "start" ? userSettings.keyAliasIdentifier + pFieldAliasName : pFieldAliasName + userSettings.keyAliasIdentifier;
 }
 function toggleTheme() {
     if (userSettings.isDarkModeTheme) {
