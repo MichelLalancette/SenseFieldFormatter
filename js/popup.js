@@ -16,7 +16,7 @@ class UserSettings {
         this.fieldAffixPosition = "doNothing";
         // this.fieldAffixValue = "";
         this.useAliasAsSourceName = false;
-        this.isAliasOnly = false;
+        this.isFormatOnly = false;
         this.isDarkModeTheme = true;
         this.isAlignAliases = false;
         this.fieldSortOrder = "doNothing";
@@ -40,7 +40,7 @@ class UserSettings {
         this.fieldAffixPosition = pStorageData.fieldAffixPosition;
         // this.fieldAffixValue = pStorageData.fieldAffixValue;
         this.useAliasAsSourceName = pStorageData.useAliasAsSourceName;
-        this.isAliasOnly = pStorageData.isAliasOnly;
+        this.isFormatOnly = pStorageData.isFormatOnly;
         this.isDarkModeTheme = pStorageData.isDarkModeTheme;
         this.isAlignAliases = pStorageData.isAlignAliases;
         this.fieldSortOrder = pStorageData.fieldSortOrder;
@@ -60,9 +60,10 @@ class Field {
         this.isKeyField = false;
     }
     getFieldNameWithAlias() {
-        return userSettings.isAliasOnly ? this.fieldSourceName : this.fieldSourceName + " AS " + this.fieldAliasName;
+        return userSettings.isFormatOnly ? this.fieldSourceName : this.fieldSourceName + " AS " + this.fieldAliasName;
     }
 }
+const REGEX_MATCH_AS = /(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi; // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
 function setUserSettings() {
     userSettings.useAliasAsSourceName = document.getElementById("isSourceFieldAlias").checked;
     userSettings.isIgnoreFormatOnKeyField = document.getElementById("isIgnoreKeyField").checked;
@@ -79,7 +80,7 @@ function setUserSettings() {
     userSettings.fieldAffixPosition = document.getElementById("fieldAffixPosition").value;
     userSettings.isDarkModeTheme = document.getElementById("toggleTheme").value === "dark" ? true : false;
     userSettings.isAlignAliases = document.getElementById("alignAlias").checked;
-    userSettings.isAliasOnly = document.getElementById("isFormatOnly").checked;
+    userSettings.isFormatOnly = document.getElementById("isFormatOnly").checked;
     userSettings.fieldSortOrder = document.getElementById("sortFields").value;
     userSettings.keySourcePosition = document.getElementById("sourceKeyPosition").value;
     userSettings.keySourceIdentifier = document.getElementById("sourceKeyIdentifier").value;
@@ -100,10 +101,9 @@ function setUserSettingsHTMLFields() {
     document.getElementById("subfieldSeparator").value = userSettings.subfieldSeparator;
     document.getElementById("subfieldno").value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
     document.getElementById("fieldAffixPosition").value = userSettings.fieldAffixPosition;
-    // (<HTMLInputElement>document.getElementById("fieldAffixText")).value = userSettings.fieldAffixValue;
     document.getElementById("toggleTheme").value = userSettings.isDarkModeTheme ? "dark" : "light";
     document.getElementById("alignAlias").checked = userSettings.isAlignAliases;
-    document.getElementById("isFormatOnly").checked = userSettings.isAliasOnly;
+    document.getElementById("isFormatOnly").checked = userSettings.isFormatOnly;
     document.getElementById("sortFields").value = userSettings.fieldSortOrder;
     document.getElementById("sourceKeyPosition").value = userSettings.keySourcePosition;
     document.getElementById("sourceKeyIdentifier").value = userSettings.keySourceIdentifier;
@@ -225,7 +225,7 @@ function toggleCheckboxChildElements(pCheckboxId, pChildClassName) {
 }
 function formatFieldsAndCopyToClipboard() {
     try {
-        const FORMATTED_OUTPUT = formatInputFields();
+        const FORMATTED_OUTPUT = buildOutput();
         // Assigns the outputted fields into the clipboard 
         previewFormatting(FORMATTED_OUTPUT);
         // Assigns the outputted fields into the clipboard 
@@ -237,7 +237,7 @@ function formatFieldsAndCopyToClipboard() {
 }
 function formatFieldsAndPreview() {
     try {
-        const FORMATTED_OUTPUT = formatInputFields();
+        const FORMATTED_OUTPUT = buildOutput();
         // Assigns the outputted fields into the clipboard 
         previewFormatting(FORMATTED_OUTPUT);
     }
@@ -245,7 +245,7 @@ function formatFieldsAndPreview() {
         console.error(e);
     }
 }
-function formatInputFields() {
+function buildOutput() {
     let fieldInfo = document.getElementById("fieldInfo").value;
     let loadStatement = "";
     ({ fieldInfo, loadStatement } = extractLoadSection(fieldInfo));
@@ -257,52 +257,66 @@ function formatInputFields() {
         .split(/[\r\n\\]+/)
         .map(s => s.trim())
         .filter(function (str) { return str; });
-    fieldArray = cleanupFields(fieldArray); // Cleanup the input fields before formatting
+    fieldArray = parseFields(fieldArray); // Cleanup the input fields before formatting
     const MAX_ARRAY_FIELD_LENGTH = Math.max(...(fieldArray.map(el => el.length))); // Get the longest field name to align the aliases
-    let fieldArrayObject = new Array();
-    fieldArray.forEach(e => {
-        let sourceField = new Field();
-        const fieldName = e.trim();
-        sourceField.fieldSourceName = AddFieldDelimiter(fieldName).padEnd(userSettings.isAlignAliases ? MAX_ARRAY_FIELD_LENGTH + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
-        sourceField.fieldAliasName = fieldName;
-        sourceField.isKeyField = fieldIsAKeyField(fieldName); // Check if the key field is a key Identifier using the configuration
-        fieldArrayObject.push(sourceField);
-    });
-    for (let i = 0; i < fieldArrayObject.length; i++) {
-        if (!fieldArrayObject[i].isKeyField || (fieldArrayObject[i].isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
-            if (userSettings.isSubfieldFieldName) {
-                fieldArrayObject[i].fieldAliasName = applySubField(fieldArrayObject[i].fieldAliasName);
-            }
-            ;
-            if (userSettings.isReplaceChars) {
-                fieldArrayObject[i].fieldAliasName = replaceChars(fieldArrayObject[i].fieldAliasName);
-            }
-            // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
-            if (userSettings.isSpaceOutCapitals) {
-                fieldArrayObject[i].fieldAliasName = spaceOutCapitals(fieldArrayObject[i]);
-            }
-            fieldArrayObject[i].fieldAliasName = addAffix(fieldArrayObject[i]);
-            fieldArrayObject[i].fieldAliasName = setFieldCase(fieldArrayObject[i].fieldAliasName);
-            if (fieldArrayObject[i].isKeyField) {
-                fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName);
-            }
-            ;
-        }
-        else {
-            fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName);
-        }
-        fieldArrayObject[i].fieldAliasName = AddFieldDelimiter(fieldArrayObject[i].fieldAliasName);
+    let fieldArrayObject = parseInputForFields(fieldArray, MAX_ARRAY_FIELD_LENGTH);
+    if (!userSettings.isFormatOnly) {
+        formatFieldAliases();
     }
     let fieldsOutput = new Array();
-    fieldsOutput.push(loadStatement);
+    if (loadStatement.length > 0) {
+        fieldsOutput.push(loadStatement);
+    } // Add Load statement that comes before the fields
     fieldsOutput = fieldsOutput.concat(fieldArrayObjectToArrayOfString(sortArray(fieldArrayObject)).map((elem, i) => {
         return insertCommaIntoArrayValue(elem, fieldArray.length, i);
-    }));
-    fieldsOutput.push(fromTableStatement);
-    // Add commas to each row in the array
-    // Formats the fields according to the user settings 
-    // then transforms the array into a string with linebreaks between each record
+    })); // Add the Fields
+    if (fromTableStatement.length > 0) {
+        fieldsOutput.push(fromTableStatement);
+    } // Add the From/Resident after the fields
+    // Transform the array into a string with linebreaks between each record
     return fieldsOutput.join("\r\n");
+    function parseInputForFields(pFieldArray, pMaxFieldLen) {
+        let fieldArrayObject = new Array();
+        pFieldArray.forEach(e => {
+            let sourceField = new Field();
+            let fieldName = e.trim();
+            if (userSettings.isFormatOnly) {
+                fieldName = fieldName.substring(fieldName.search(REGEX_MATCH_AS));
+            }
+            sourceField.fieldSourceName = AddFieldDelimiter(fieldName).padEnd(userSettings.isAlignAliases ? pMaxFieldLen + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
+            sourceField.fieldAliasName = fieldName;
+            sourceField.isKeyField = fieldIsAKeyField(fieldName); // Check if the key field is a key Identifier using the configuration
+            fieldArrayObject.push(sourceField);
+        });
+        return fieldArrayObject;
+    }
+    function formatFieldAliases() {
+        for (let i = 0; i < fieldArrayObject.length; i++) {
+            if (!fieldArrayObject[i].isKeyField || (fieldArrayObject[i].isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
+                if (userSettings.isSubfieldFieldName) {
+                    fieldArrayObject[i].fieldAliasName = applySubField(fieldArrayObject[i].fieldAliasName);
+                }
+                ;
+                if (userSettings.isReplaceChars) {
+                    fieldArrayObject[i].fieldAliasName = replaceChars(fieldArrayObject[i].fieldAliasName);
+                }
+                // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
+                if (userSettings.isSpaceOutCapitals) {
+                    fieldArrayObject[i].fieldAliasName = spaceOutCapitals(fieldArrayObject[i]);
+                }
+                fieldArrayObject[i].fieldAliasName = addAffix(fieldArrayObject[i]);
+                fieldArrayObject[i].fieldAliasName = setFieldCase(fieldArrayObject[i].fieldAliasName);
+                if (fieldArrayObject[i].isKeyField) {
+                    fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName);
+                }
+                ;
+            }
+            else {
+                fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName);
+            }
+            fieldArrayObject[i].fieldAliasName = AddFieldDelimiter(fieldArrayObject[i].fieldAliasName);
+        }
+    }
 }
 function fieldArrayObjectToArrayOfString(pFieldArrayObject) {
     let fieldArrayStrings = new Array();
@@ -330,13 +344,13 @@ function extractLoadSection(pFieldInfo) {
     }
     return { fieldInfo: pFieldInfo, loadStatement };
 }
-function cleanupFields(pFieldArray) {
+function parseFields(pFieldArray) {
     for (let i = 0; i < pFieldArray.length; i++) {
         if (userSettings.useAliasAsSourceName) {
             pFieldArray[i] = pFieldArray[i].replace(/(.+\sAS\s+)/i, '');
         } // (.+\sAS\s+) matches everything up to the AS part of the alias
-        else if (pFieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
-            pFieldArray[i] = pFieldArray[i].substring(0, pFieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+        else if (pFieldArray[i].search(REGEX_MATCH_AS) !== -1) {
+            pFieldArray[i] = pFieldArray[i].substring(0, pFieldArray[i].search(REGEX_MATCH_AS));
         }
         pFieldArray[i] = removeDelimiter(pFieldArray[i]);
     }
@@ -357,7 +371,7 @@ function sortArray(pFieldArray) {
     return pFieldArray;
 }
 function assembleFieldAndAlias(pSourceFieldName, pAliasField) {
-    return userSettings.isAliasOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
+    return userSettings.isFormatOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
 }
 function previewFormatting(formatOutput) {
     document.getElementById("formattingOutput").value = formatOutput;

@@ -16,7 +16,7 @@ class UserSettings {
   public isDarkModeTheme: boolean;
   public subfieldNo: number;
   public isAlignAliases: boolean;
-  public isAliasOnly: boolean;
+  public isFormatOnly: boolean;
   public fieldSortOrder: string;
   public keySourcePosition: string;
   public keySourceIdentifier: string;
@@ -39,7 +39,7 @@ class UserSettings {
     this.fieldAffixPosition = "doNothing";
     // this.fieldAffixValue = "";
     this.useAliasAsSourceName = false;
-    this.isAliasOnly = false;
+    this.isFormatOnly = false;
     this.isDarkModeTheme = true;
     this.isAlignAliases = false;
     this.fieldSortOrder = "doNothing";
@@ -64,7 +64,7 @@ class UserSettings {
     this.fieldAffixPosition = pStorageData.fieldAffixPosition;
     // this.fieldAffixValue = pStorageData.fieldAffixValue;
     this.useAliasAsSourceName = pStorageData.useAliasAsSourceName;
-    this.isAliasOnly = pStorageData.isAliasOnly;
+    this.isFormatOnly = pStorageData.isFormatOnly;
     this.isDarkModeTheme = pStorageData.isDarkModeTheme;
     this.isAlignAliases = pStorageData.isAlignAliases;
     this.fieldSortOrder = pStorageData.fieldSortOrder;
@@ -74,8 +74,8 @@ class UserSettings {
     this.keyAliasIdentifier = pStorageData.keyAliasIdentifier;
   }
 
-  public isKeyFieldGeneratorActive()  {
-    return this.keySourceIdentifier.trim().length > 0 && this.keyAliasIdentifier .trim().length > 0;
+  public isKeyFieldGeneratorActive() {
+    return this.keySourceIdentifier.trim().length > 0 && this.keyAliasIdentifier.trim().length > 0;
   }
 }
 
@@ -91,9 +91,11 @@ class Field {
   }
 
   public getFieldNameWithAlias(): string {
-    return userSettings.isAliasOnly ? this.fieldSourceName : this.fieldSourceName + " AS " + this.fieldAliasName;
+    return userSettings.isFormatOnly ? this.fieldSourceName : this.fieldSourceName + " AS " + this.fieldAliasName;
   }
 }
+
+const REGEX_MATCH_AS: RegExp = /(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi; // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
 
 
 function setUserSettings(): void {
@@ -112,7 +114,7 @@ function setUserSettings(): void {
   userSettings.fieldAffixPosition = (<HTMLInputElement>document.getElementById("fieldAffixPosition")).value;
   userSettings.isDarkModeTheme = (<HTMLButtonElement>document.getElementById("toggleTheme")).value === "dark" ? true : false;
   userSettings.isAlignAliases = (<HTMLInputElement>document.getElementById("alignAlias")).checked;
-  userSettings.isAliasOnly = (<HTMLInputElement>document.getElementById("isFormatOnly")).checked;
+  userSettings.isFormatOnly = (<HTMLInputElement>document.getElementById("isFormatOnly")).checked;
   userSettings.fieldSortOrder = (<HTMLInputElement>document.getElementById("sortFields")).value;
 
   userSettings.keySourcePosition = (<HTMLInputElement>document.getElementById("sourceKeyPosition")).value;
@@ -135,10 +137,9 @@ function setUserSettingsHTMLFields() {
   (<HTMLInputElement>document.getElementById("subfieldSeparator")).value = userSettings.subfieldSeparator;
   (<HTMLInputElement>document.getElementById("subfieldno")).value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
   (<HTMLInputElement>document.getElementById("fieldAffixPosition")).value = userSettings.fieldAffixPosition;
-  // (<HTMLInputElement>document.getElementById("fieldAffixText")).value = userSettings.fieldAffixValue;
   (<HTMLInputElement>document.getElementById("toggleTheme")).value = userSettings.isDarkModeTheme ? "dark" : "light";
   (<HTMLInputElement>document.getElementById("alignAlias")).checked = userSettings.isAlignAliases;
-  (<HTMLInputElement>document.getElementById("isFormatOnly")).checked = userSettings.isAliasOnly;
+  (<HTMLInputElement>document.getElementById("isFormatOnly")).checked = userSettings.isFormatOnly;
   (<HTMLInputElement>document.getElementById("sortFields")).value = userSettings.fieldSortOrder;
   (<HTMLInputElement>document.getElementById("sourceKeyPosition")).value = userSettings.keySourcePosition;
   (<HTMLInputElement>document.getElementById("sourceKeyIdentifier")).value = userSettings.keySourceIdentifier;
@@ -268,7 +269,7 @@ function toggleCheckboxChildElements(pCheckboxId: string, pChildClassName: strin
 
 function formatFieldsAndCopyToClipboard() {
   try {
-    const FORMATTED_OUTPUT: string = formatInputFields();
+    const FORMATTED_OUTPUT: string = buildOutput();
 
     // Assigns the outputted fields into the clipboard 
     previewFormatting(FORMATTED_OUTPUT);
@@ -283,7 +284,7 @@ function formatFieldsAndCopyToClipboard() {
 
 function formatFieldsAndPreview() {
   try {
-    const FORMATTED_OUTPUT: string = formatInputFields();
+    const FORMATTED_OUTPUT: string = buildOutput();
 
     // Assigns the outputted fields into the clipboard 
     previewFormatting(FORMATTED_OUTPUT);
@@ -293,7 +294,7 @@ function formatFieldsAndPreview() {
   }
 }
 
-function formatInputFields() {
+function buildOutput() {
 
   let fieldInfo = (<HTMLInputElement>document.getElementById("fieldInfo")).value;
   let loadStatement: string = "";
@@ -309,48 +310,62 @@ function formatInputFields() {
     .map(s => s.trim())
     .filter(function (str) { return str });
 
-  fieldArray = cleanupFields(fieldArray); // Cleanup the input fields before formatting
+  fieldArray = parseFields(fieldArray); // Cleanup the input fields before formatting
 
   const MAX_ARRAY_FIELD_LENGTH: number = Math.max(...(fieldArray.map(el => el.length))); // Get the longest field name to align the aliases
 
-  let fieldArrayObject: Field[] = new Array();
+  let fieldArrayObject: Field[] = parseInputForFields(fieldArray, MAX_ARRAY_FIELD_LENGTH);
 
-  fieldArray.forEach(e => {
-    let sourceField: Field = new Field();
-    const fieldName = e.trim();
-    sourceField.fieldSourceName = AddFieldDelimiter(fieldName).padEnd(userSettings.isAlignAliases ? MAX_ARRAY_FIELD_LENGTH + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
-    sourceField.fieldAliasName = fieldName;
-    sourceField.isKeyField = fieldIsAKeyField(fieldName); // Check if the key field is a key Identifier using the configuration
-    fieldArrayObject.push(sourceField);
-  }
-  );
-
-  for (let i = 0; i < fieldArrayObject.length; i++) {
-    if (!fieldArrayObject[i].isKeyField || (fieldArrayObject[i].isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
-      if (userSettings.isSubfieldFieldName) { fieldArrayObject[i].fieldAliasName = applySubField(fieldArrayObject[i].fieldAliasName) };
-      if (userSettings.isReplaceChars) { fieldArrayObject[i].fieldAliasName = replaceChars(fieldArrayObject[i].fieldAliasName); }
-      // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
-      if (userSettings.isSpaceOutCapitals) { fieldArrayObject[i].fieldAliasName = spaceOutCapitals(fieldArrayObject[i]); }
-      fieldArrayObject[i].fieldAliasName = addAffix(fieldArrayObject[i]);
-      fieldArrayObject[i].fieldAliasName = setFieldCase(fieldArrayObject[i].fieldAliasName);
-      if(fieldArrayObject[i].isKeyField) { fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName) };
-    }
-    else { fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName); }
-
-    fieldArrayObject[i].fieldAliasName = AddFieldDelimiter(fieldArrayObject[i].fieldAliasName);
+  if (!userSettings.isFormatOnly) {
+    formatFieldAliases();
   }
 
   let fieldsOutput: string[] = new Array();
-  fieldsOutput.push(loadStatement);
+  if (loadStatement.length > 0) { fieldsOutput.push(loadStatement); } // Add Load statement that comes before the fields
   fieldsOutput = fieldsOutput.concat(fieldArrayObjectToArrayOfString(sortArray(fieldArrayObject)).map((elem: string, i: number) => {
     return insertCommaIntoArrayValue(elem, fieldArray.length, i);
-  }));
-  fieldsOutput.push(fromTableStatement);
-  
-  // Add commas to each row in the array
-  // Formats the fields according to the user settings 
-  // then transforms the array into a string with linebreaks between each record
+  })); // Add the Fields
+  if (fromTableStatement.length > 0) { fieldsOutput.push(fromTableStatement); } // Add the From/Resident after the fields
+
+  // Transform the array into a string with linebreaks between each record
   return fieldsOutput.join("\r\n");
+
+  function parseInputForFields(pFieldArray: string[], pMaxFieldLen: number) {
+
+    let fieldArrayObject: Field[] = new Array();
+
+    pFieldArray.forEach(e => {
+      let sourceField: Field = new Field();
+      let fieldName: string = e.trim();
+      if (userSettings.isFormatOnly) {
+        fieldName = fieldName.substring(fieldName.search(REGEX_MATCH_AS));
+      }
+      sourceField.fieldSourceName = AddFieldDelimiter(fieldName).padEnd(userSettings.isAlignAliases ? pMaxFieldLen + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
+      sourceField.fieldAliasName = fieldName;
+      sourceField.isKeyField = fieldIsAKeyField(fieldName); // Check if the key field is a key Identifier using the configuration
+      fieldArrayObject.push(sourceField);
+    }
+    );
+
+    return fieldArrayObject;
+  }
+
+  function formatFieldAliases() {
+    for (let i = 0; i < fieldArrayObject.length; i++) {
+      if (!fieldArrayObject[i].isKeyField || (fieldArrayObject[i].isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
+        if (userSettings.isSubfieldFieldName) { fieldArrayObject[i].fieldAliasName = applySubField(fieldArrayObject[i].fieldAliasName); };
+        if (userSettings.isReplaceChars) { fieldArrayObject[i].fieldAliasName = replaceChars(fieldArrayObject[i].fieldAliasName); }
+        // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
+        if (userSettings.isSpaceOutCapitals) { fieldArrayObject[i].fieldAliasName = spaceOutCapitals(fieldArrayObject[i]); }
+        fieldArrayObject[i].fieldAliasName = addAffix(fieldArrayObject[i]);
+        fieldArrayObject[i].fieldAliasName = setFieldCase(fieldArrayObject[i].fieldAliasName);
+        if (fieldArrayObject[i].isKeyField) { fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName); };
+      }
+      else { fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName); }
+
+      fieldArrayObject[i].fieldAliasName = AddFieldDelimiter(fieldArrayObject[i].fieldAliasName);
+    }
+  }
 }
 
 function fieldArrayObjectToArrayOfString(pFieldArrayObject: Field[]): string[] {
@@ -390,11 +405,11 @@ function extractLoadSection(pFieldInfo: string,) {
   return { fieldInfo: pFieldInfo, loadStatement };
 }
 
-function cleanupFields(pFieldArray: string[]) {
+function parseFields(pFieldArray: string[]) {
   for (let i = 0; i < pFieldArray.length; i++) {
     if (userSettings.useAliasAsSourceName) { pFieldArray[i] = pFieldArray[i].replace(/(.+\sAS\s+)/i, ''); } // (.+\sAS\s+) matches everything up to the AS part of the alias
-    else if (pFieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi) !== -1) { // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
-      pFieldArray[i] = pFieldArray[i].substring(0, pFieldArray[i].search(/(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi));
+    else if (pFieldArray[i].search(REGEX_MATCH_AS) !== -1) {
+      pFieldArray[i] = pFieldArray[i].substring(0, pFieldArray[i].search(REGEX_MATCH_AS));
     }
     pFieldArray[i] = removeDelimiter(pFieldArray[i]);
   }
@@ -404,21 +419,21 @@ function cleanupFields(pFieldArray: string[]) {
 
 function sortArray(pFieldArray: Field[]): Field[] {
   if (userSettings.fieldSortOrder === "key") {
-    pFieldArray = pFieldArray.sort((a, b) => a.isKeyField && !b.isKeyField ? -1 : !a.isKeyField && b.isKeyField ? 1 
-                                              : (a.isKeyField && b.isKeyField && a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1 
-                                              : (a.isKeyField && b.isKeyField && b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1 
-                                              : 0)
+    pFieldArray = pFieldArray.sort((a, b) => a.isKeyField && !b.isKeyField ? -1 : !a.isKeyField && b.isKeyField ? 1
+      : (a.isKeyField && b.isKeyField && a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1
+        : (a.isKeyField && b.isKeyField && b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1
+          : 0)
   } else if (userSettings.fieldSortOrder === "all") {
-    pFieldArray = pFieldArray.sort((a, b) => (a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1 
-                                              : ((b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1 
-                                              : 0))
+    pFieldArray = pFieldArray.sort((a, b) => (a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1
+      : ((b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1
+        : 0))
   }
 
   return pFieldArray;
 }
 
 function assembleFieldAndAlias(pSourceFieldName: string, pAliasField: string): string {
-  return userSettings.isAliasOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
+  return userSettings.isFormatOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
 }
 
 function previewFormatting(formatOutput: string) {
@@ -551,8 +566,8 @@ function addAffix(pFieldValue: Field): string {
   }
 
   return userSettings.fieldAffixPosition === 'suffix'
-      ? pFieldValue.fieldAliasName + fieldAffixValue
-      : fieldAffixValue + pFieldValue.fieldAliasName;
+    ? pFieldValue.fieldAliasName + fieldAffixValue
+    : fieldAffixValue + pFieldValue.fieldAliasName;
 }
 
 function removeDelimiter(pFieldValue: string) {
@@ -578,7 +593,7 @@ function fieldIsAKeyField(pInputString: string) {
 
   let isKeyField = false;
   if (userSettings.keySourcePosition === "start" && userSettings.isKeyFieldGeneratorActive()) {
-    isKeyField =  pInputString.startsWith(userSettings.keySourceIdentifier) ? true : false;
+    isKeyField = pInputString.startsWith(userSettings.keySourceIdentifier) ? true : false;
   }
   else if (userSettings.keySourcePosition === "end" && userSettings.isKeyFieldGeneratorActive()) {
     isKeyField = pInputString.endsWith(userSettings.keySourceIdentifier) ? true : false;
