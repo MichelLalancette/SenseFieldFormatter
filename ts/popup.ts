@@ -135,7 +135,7 @@ function setUserSettingsHTMLFields() {
   (<HTMLInputElement>document.getElementById("changeStringCase")).value = userSettings.changeStringCase;
   (<HTMLInputElement>document.getElementById("isSubfieldFields")).checked = userSettings.isSubfieldFieldName;
   (<HTMLInputElement>document.getElementById("subfieldSeparator")).value = userSettings.subfieldSeparator;
-  (<HTMLInputElement>document.getElementById("subfieldno")).value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
+  (<HTMLInputElement>document.getElementById("subfieldno")).value = userSettings.subfieldNo !== undefined ? parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString() : "0";
   (<HTMLInputElement>document.getElementById("fieldAffixPosition")).value = userSettings.fieldAffixPosition;
   (<HTMLInputElement>document.getElementById("toggleTheme")).value = userSettings.isDarkModeTheme ? "dark" : "light";
   (<HTMLInputElement>document.getElementById("alignAlias")).checked = userSettings.isAlignAliases;
@@ -645,13 +645,7 @@ function changeTab(event: HTMLInputElement, pContentId: string, tabContentName: 
 
 
 function replaceChars(pInputString: string): string {
-  const FIND_WHAT_ARRAY = userSettings.charsToReplace.split('');
-
-  const REPLACE_WITH = userSettings.replaceWith;
-
-  FIND_WHAT_ARRAY.forEach(element => pInputString = pInputString.replace(element, REPLACE_WITH));
-
-  return pInputString;
+  return pInputString.replace(userSettings.charsToReplace,userSettings.replaceWith);
 }
 
 function setFieldCase(pInputString: string): string {

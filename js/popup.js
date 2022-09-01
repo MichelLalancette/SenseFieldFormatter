@@ -99,7 +99,7 @@ function setUserSettingsHTMLFields() {
     document.getElementById("changeStringCase").value = userSettings.changeStringCase;
     document.getElementById("isSubfieldFields").checked = userSettings.isSubfieldFieldName;
     document.getElementById("subfieldSeparator").value = userSettings.subfieldSeparator;
-    document.getElementById("subfieldno").value = parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString();
+    document.getElementById("subfieldno").value = userSettings.subfieldNo !== undefined ? parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString() : "0";
     document.getElementById("fieldAffixPosition").value = userSettings.fieldAffixPosition;
     document.getElementById("toggleTheme").value = userSettings.isDarkModeTheme ? "dark" : "light";
     document.getElementById("alignAlias").checked = userSettings.isAlignAliases;
@@ -551,10 +551,7 @@ function changeTab(event, pContentId, tabContentName, tabClassName) {
     event.className += " active";
 }
 function replaceChars(pInputString) {
-    const FIND_WHAT_ARRAY = userSettings.charsToReplace.split('');
-    const REPLACE_WITH = userSettings.replaceWith;
-    FIND_WHAT_ARRAY.forEach(element => pInputString = pInputString.replace(element, REPLACE_WITH));
-    return pInputString;
+    return pInputString.replace(userSettings.charsToReplace, userSettings.replaceWith);
 }
 function setFieldCase(pInputString) {
     let fieldString = pInputString;
