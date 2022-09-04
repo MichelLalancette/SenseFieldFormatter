@@ -135,7 +135,7 @@ function setUserSettingsHTMLFields() {
   (<HTMLInputElement>document.getElementById("changeStringCase")).value = userSettings.changeStringCase;
   (<HTMLInputElement>document.getElementById("isSubfieldFields")).checked = userSettings.isSubfieldFieldName;
   (<HTMLInputElement>document.getElementById("subfieldSeparator")).value = userSettings.subfieldSeparator;
-  (<HTMLInputElement>document.getElementById("subfieldno")).value = userSettings.subfieldNo !== undefined ? parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString() : "0";
+  (<HTMLInputElement>document.getElementById("subfieldno")).value = userSettings.subfieldNo !== undefined ? parseInt(userSettings.subfieldNo.toString()) === 0 || userSettings.subfieldNo.toString() === "NaN" ? "" : userSettings.subfieldNo.toString() : "0"; // Added check for undefinied variable to avoid toString on undefined field
   (<HTMLInputElement>document.getElementById("fieldAffixPosition")).value = userSettings.fieldAffixPosition;
   (<HTMLInputElement>document.getElementById("toggleTheme")).value = userSettings.isDarkModeTheme ? "dark" : "light";
   (<HTMLInputElement>document.getElementById("alignAlias")).checked = userSettings.isAlignAliases;
