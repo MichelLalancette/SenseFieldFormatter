@@ -1,6 +1,5 @@
 class UserSettings {
   public isIgnoreFormatOnKeyField: boolean;
-  // public keyFieldIdentifier: string;
   public commaPosition: string;
   public fieldDelimiter: string;
   public isReplaceChars: boolean;
@@ -11,7 +10,6 @@ class UserSettings {
   public isSubfieldFieldName: boolean;
   public subfieldSeparator: string;
   public fieldAffixPosition: string;
-  // public fieldAffixValue: string;
   public useAliasAsSourceName: boolean;
   public isDarkModeTheme: boolean;
   public subfieldNo: number;
@@ -25,7 +23,6 @@ class UserSettings {
 
   constructor() {
     this.isIgnoreFormatOnKeyField = false;
-    // this.keyFieldIdentifier = "";
     this.commaPosition = "lc";
     this.fieldDelimiter = "";
     this.isReplaceChars = false;
@@ -37,7 +34,6 @@ class UserSettings {
     this.subfieldSeparator = "";
     this.subfieldNo = 0;
     this.fieldAffixPosition = "doNothing";
-    // this.fieldAffixValue = "";
     this.useAliasAsSourceName = false;
     this.isFormatOnly = false;
     this.isDarkModeTheme = true;
@@ -62,7 +58,6 @@ class UserSettings {
     this.subfieldSeparator = pStorageData.subfieldSeparator;
     this.subfieldNo = pStorageData.subfieldNo;
     this.fieldAffixPosition = pStorageData.fieldAffixPosition;
-    // this.fieldAffixValue = pStorageData.fieldAffixValue;
     this.useAliasAsSourceName = pStorageData.useAliasAsSourceName;
     this.isFormatOnly = pStorageData.isFormatOnly;
     this.isDarkModeTheme = pStorageData.isDarkModeTheme;
@@ -561,8 +556,11 @@ function left(pStr: string, pChrLength: number): string {
  */
 function addAffix(pFieldValue: Field): string {
   let fieldAffixValue: string = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
-  if (userSettings.fieldAffixPosition === "doNothing" || userSettings.isIgnoreFormatOnKeyField) {
+  if (userSettings.fieldAffixPosition === "doNothing" || userSettings.isIgnoreFormatOnKeyField && pFieldValue.isKeyField) {
     return pFieldValue.fieldAliasName;
+  }
+  else if (!userSettings.isIgnoreFormatOnKeyField && pFieldValue.isKeyField && userSettings.fieldAffixPosition === 'prefix' && userSettings.keySourcePosition === 'start') {
+    return pFieldValue.fieldAliasName.slice(0, userSettings.keySourceIdentifier.length) + fieldAffixValue + pFieldValue.fieldAliasName.slice(userSettings.keySourceIdentifier.length);
   }
 
   return userSettings.fieldAffixPosition === 'suffix'
@@ -592,10 +590,10 @@ function removeDelimiter(pFieldValue: string) {
 function fieldIsAKeyField(pInputString: string) {
 
   let isKeyField = false;
-  if (userSettings.keySourcePosition === "start" && userSettings.isKeyFieldGeneratorActive()) {
+  if (userSettings.keySourcePosition === "start") {
     isKeyField = pInputString.startsWith(userSettings.keySourceIdentifier) ? true : false;
   }
-  else if (userSettings.keySourcePosition === "end" && userSettings.isKeyFieldGeneratorActive()) {
+  else if (userSettings.keySourcePosition === "end") {
     isKeyField = pInputString.endsWith(userSettings.keySourceIdentifier) ? true : false;
   }
 
@@ -664,6 +662,9 @@ function setFieldCase(pInputString: string): string {
     case "capitalize":
       fieldString = fieldString.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
       break;
+      case "capitalizeFirst":
+        fieldString = fieldString.toLowerCase().replace(/^.{1}/g, m => m.toUpperCase());
+        break;
     default: break;
   };
 
