@@ -1,0 +1,17 @@
+#div_SFF_CopyOutput {
+    margin-right: auto !important;
+}
+
+#btn_SFF_CopyOutput {
+    background-color: rgb(0, 152, 69);
+    color: white;
+}
+
+#lbl_SFF_CopyOutput {
+    color: #797979;
+}
+
+.sff-expressionFooter {
+    display: flex;
+    justify-content: flex-end;
+}

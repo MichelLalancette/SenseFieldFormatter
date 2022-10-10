@@ -3,7 +3,7 @@
   "description": "Sense Field Formatter",
   "manifest_version": 2,
   "name": "Sense Field Formatter",
-  "version": "1.6",
+  "version": "1.7",
   "homepage_url": "https://github.com/MichelLalancette/SenseFieldFormatter",
   "icons": {
     "48": "./images/SenseFieldFormatter_48.png"
@@ -21,6 +21,14 @@
     }],
     "default_title": "Qlik Sense Field Formatter",
     "default_popup": "html/popup.html"
-  }
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*/sense/app/*"],
+      "css": ["css/content_scripts.css"],
+      "js": ["js/content_scripts.js", "js/shared.js"]
+    }
+  ]
 
 }
