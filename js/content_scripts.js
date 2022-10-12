@@ -32,7 +32,9 @@ const MUTATION_OBSERVER = new MutationObserver(function (mutations) {
                 copyOutputButton.onclick = function () {
                     if (document.getElementsByClassName("evaluated")[0] !== undefined) {
                         const outputText = document.getElementsByClassName("evaluated")[0].innerText.trim();
-                        navigator.clipboard.writeText(outputText);
+                        copyToClipboardPromise(outputText).then(function () {
+                            displayMessageInHTMLElement('lbl_SFF_CopyOutput', 'Success!', 500);
+                        });
                     }
                     else {
                         displayMessageInHTMLElement('lbl_SFF_CopyOutput', 'There\'s no expression to copy.', 2500);
@@ -57,3 +59,32 @@ const qlikSenseAppPage = document.querySelector('.qv-client');
 MUTATION_OBSERVER.observe(qlikSenseAppPage, {
     childList: true
 });
+/**
+ * Copies a string to the clipboard. Must be called from within an event handler such as click.
+ * @param textToCopy
+ * @returns Returns a void Promise
+ */
+function copyToClipboardPromise(textToCopy) {
+    // navigator clipboard api needs a secure context (https)
+    if (navigator.clipboard && window.isSecureContext) {
+        // navigator clipboard api method'
+        return navigator.clipboard.writeText(textToCopy);
+    }
+    else {
+        // text area method
+        let textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        // make the textarea out of viewport
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        return new Promise((res, rej) => {
+            // here the magic happens
+            document.execCommand('copy') ? res() : rej();
+            textArea.remove();
+        });
+    }
+}

@@ -3,7 +3,7 @@ class UserSettings {
     constructor() {
         this.isIgnoreFormatOnKeyField = false;
         this.commaPosition = "lc";
-        this.fieldDelimiter = "";
+        this.fieldDelimiter = "sb";
         this.isReplaceChars = false;
         this.charsToReplace = "";
         this.replaceWith = "";
@@ -493,10 +493,10 @@ function removeDelimiter(pFieldValue) {
 }
 function fieldIsAKeyField(pInputString) {
     let isKeyField = false;
-    if (userSettings.keySourcePosition === "start") {
+    if (userSettings.keySourcePosition === "start" && userSettings.keySourceIdentifier.trim().length > 0) {
         isKeyField = pInputString.startsWith(userSettings.keySourceIdentifier) ? true : false;
     }
-    else if (userSettings.keySourcePosition === "end") {
+    else if (userSettings.keySourcePosition === "end" && userSettings.keySourceIdentifier.trim().length > 0) {
         isKeyField = pInputString.endsWith(userSettings.keySourceIdentifier) ? true : false;
     }
     return isKeyField;
@@ -538,7 +538,7 @@ function changeTab(event, pContentId, tabContentName, tabClassName) {
     event.className += " active";
 }
 function replaceChars(pInputString) {
-    return pInputString.replace(userSettings.charsToReplace, userSettings.replaceWith);
+    return pInputString.replaceAll(userSettings.charsToReplace, userSettings.replaceWith);
 }
 function setFieldCase(pInputString) {
     let fieldString = pInputString;
@@ -625,6 +625,13 @@ function initializeTheme() {
         toggleTheme();
     }
 }
+/**asd */
+String.prototype.replaceAll = function (strReplace, strWith) {
+    // See http://stackoverflow.com/a/3561711/556609
+    let esc = strReplace.toString().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    let reg = new RegExp(esc, 'ig');
+    return this.replace(reg, strWith.toString());
+};
 let userSettings = new UserSettings();
 /**
  * When the popup loads, inject a content script into the active tab,

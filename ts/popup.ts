@@ -24,7 +24,7 @@ class UserSettings {
   constructor() {
     this.isIgnoreFormatOnKeyField = false;
     this.commaPosition = "lc";
-    this.fieldDelimiter = "";
+    this.fieldDelimiter = "sb";
     this.isReplaceChars = false;
     this.charsToReplace = "";
     this.replaceWith = "";
@@ -574,12 +574,11 @@ function removeDelimiter(pFieldValue: string) {
 }
 
 function fieldIsAKeyField(pInputString: string) {
-
   let isKeyField = false;
-  if (userSettings.keySourcePosition === "start") {
+  if (userSettings.keySourcePosition === "start" && userSettings.keySourceIdentifier.trim().length > 0) {
     isKeyField = pInputString.startsWith(userSettings.keySourceIdentifier) ? true : false;
   }
-  else if (userSettings.keySourcePosition === "end") {
+  else if (userSettings.keySourcePosition === "end" && userSettings.keySourceIdentifier.trim().length > 0) {
     isKeyField = pInputString.endsWith(userSettings.keySourceIdentifier) ? true : false;
   }
 
@@ -629,7 +628,7 @@ function changeTab(event: HTMLInputElement, pContentId: string, tabContentName: 
 
 
 function replaceChars(pInputString: string): string {
-  return pInputString.replace(userSettings.charsToReplace,userSettings.replaceWith);
+  return pInputString.replaceAll(userSettings.charsToReplace, userSettings.replaceWith);
 }
 
 function setFieldCase(pInputString: string): string {
@@ -648,9 +647,9 @@ function setFieldCase(pInputString: string): string {
     case "capitalize":
       fieldString = fieldString.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
       break;
-      case "capitalizeFirst":
-        fieldString = fieldString.toLowerCase().replace(/^.{1}/g, m => m.toUpperCase());
-        break;
+    case "capitalizeFirst":
+      fieldString = fieldString.toLowerCase().replace(/^.{1}/g, m => m.toUpperCase());
+      break;
     default: break;
   };
 
@@ -735,6 +734,14 @@ function initializeTheme() {
     toggleTheme();
   }
 }
+
+/**asd */
+String.prototype.replaceAll = function (strReplace: string, strWith: any): string {
+  // See http://stackoverflow.com/a/3561711/556609
+  let esc = strReplace.toString().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  let reg = new RegExp(esc, 'ig');
+  return this.replace(reg, strWith.toString());
+};
 
 let userSettings = new UserSettings();
 /**

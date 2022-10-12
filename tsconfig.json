@@ -6,7 +6,7 @@
 
     // Language and Environment
     "target": "ES6",
-    "lib": ["ES5", "ES6", "DOM", "DOM.Iterable"],
+    "lib": ["ES5", "ES6", "DOM", "DOM.Iterable", "ES2021.String"],
 
     // Modules
     "module": "commonjs",
