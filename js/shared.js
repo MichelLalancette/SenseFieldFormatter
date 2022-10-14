@@ -12,3 +12,13 @@ function displayMessageInHTMLElement(pElementId, pMessage, pTimeoutDuration) {
         status.textContent = '';
     }, pTimeoutDuration);
 }
+function GetExpressionEditorFooderIndex(childElement, parentElement) {
+    var _a;
+    let footerIndex = 0;
+    for (let index = 0; index < document.getElementsByClassName(childElement).length; index++) {
+        if (((_a = document.getElementsByClassName(childElement)[index].parentElement) === null || _a === void 0 ? void 0 : _a.id) === parentElement) {
+            footerIndex = index;
+        }
+    }
+    return footerIndex;
+}

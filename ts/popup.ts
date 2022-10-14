@@ -86,7 +86,7 @@ class Field {
   }
 
   public getFieldNameWithAlias(): string {
-    return userSettings.isFormatOnly ? this.fieldSourceName : this.fieldSourceName + " AS " + this.fieldAliasName;
+    return userSettings.isFormatOnly ? this.fieldSourceName.trim() : this.fieldSourceName + " AS " + this.fieldAliasName;
   }
 }
 

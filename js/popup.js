@@ -57,7 +57,7 @@ class Field {
         this.isKeyField = false;
     }
     getFieldNameWithAlias() {
-        return userSettings.isFormatOnly ? this.fieldSourceName : this.fieldSourceName + " AS " + this.fieldAliasName;
+        return userSettings.isFormatOnly ? this.fieldSourceName.trim() : this.fieldSourceName + " AS " + this.fieldAliasName;
     }
 }
 const REGEX_MATCH_AS = /(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi; // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters

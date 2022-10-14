@@ -7,8 +7,9 @@ const MUTATION_OBSERVER = new MutationObserver(function (mutations) {
             // Whenever an expression window opens, add the custom div/button/label to the page.
             if (mutation.addedNodes.length) {
                 if (mutation.addedNodes[0].innerHTML.match("expression-editor-wrapper")) {
-                    document.getElementsByClassName("lui-dialog__footer")[0].prepend(CreateCopyOutputDiv()); // Prepending (adding at the start) of the div's child elements.
-                    document.getElementsByClassName("lui-dialog__footer")[0].classList.add("sff-expressionFooter"); // Add a custom css class to the footer to allow the button to appear on the left side.
+                    const expressionEditorFooterIndex = GetExpressionEditorFooderIndex("lui-dialog__footer", "expression-editor-wrapper");
+                    document.getElementsByClassName("lui-dialog__footer")[expressionEditorFooterIndex].prepend(CreateCopyOutputDiv()); // Prepending (adding at the start) of the div's child elements.
+                    document.getElementsByClassName("lui-dialog__footer")[expressionEditorFooterIndex].classList.add("sff-expressionFooter"); // Add a custom css class to the footer to allow the button to appear on the left side.
                 }
             }
         }

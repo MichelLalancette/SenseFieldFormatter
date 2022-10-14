@@ -11,3 +11,14 @@ function displayMessageInHTMLElement(pElementId: string, pMessage: string, pTime
     status!.textContent = '';
   }, pTimeoutDuration);
 }
+
+function GetExpressionEditorFooderIndex(childElement: string, parentElement: string): number {
+  let footerIndex: number = 0;
+  for (let index = 0; index < document.getElementsByClassName(childElement).length; index++) {
+      if ((<HTMLInputElement>document.getElementsByClassName(childElement)[index]).parentElement?.id === parentElement) {
+          footerIndex = index;
+      }
+  }
+  
+  return footerIndex;
+}
