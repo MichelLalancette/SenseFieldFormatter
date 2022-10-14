@@ -3,7 +3,7 @@
   "description": "Sense Field Formatter",
   "manifest_version": 3,
   "name": "Sense Field Formatter",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "homepage_url": "https://github.com/MichelLalancette/SenseFieldFormatter",
   "icons": {
     "48": "./images/SenseFieldFormatter_48.png"
