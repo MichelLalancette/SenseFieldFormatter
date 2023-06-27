@@ -10,7 +10,9 @@
   },
 
   "permissions": [
-    "storage"
+    "storage",
+    "webNavigation",
+    "activeTab"
   ],
   "browser_action": {
     "default_icon": "./images/SenseFieldFormatter_32.png",
@@ -25,10 +27,11 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*/sense/app/*"],
+      "matches": ["*://*/sense/app/*", "*://*/dataloadeditor/*"],
       "css": ["css/content_scripts.css"],
       "js": ["js/content_scripts.js", "js/shared.js"]
     }
   ]
+  
 
 }

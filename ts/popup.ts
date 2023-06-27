@@ -86,8 +86,9 @@ class Field {
   }
 
   public getFieldNameWithAlias(): string {
-    return userSettings.isFormatOnly ? this.fieldSourceName.trim() : this.fieldSourceName + " AS " + this.fieldAliasName;
+    return userSettings.isFormatOnly ? this.fieldSourceName.trim() : `${this.fieldSourceName} AS ${this.fieldAliasName}`;
   }
+
 }
 
 const REGEX_MATCH_AS: RegExp = /(?<!\["`)\bAS\b(?![\w\s]*[\]"`])/gmi; // (?<!\["`)\bAS\b(?![\w\s]*[\]"`]) Finds an AS that is not between delimiters
@@ -154,37 +155,54 @@ function saveUserSettings(): void {
  * Listen for clicks on the buttons, and performs the appropriate action.
  */
 function listenForClicks(): void {
+  // Event listener for "change" event
   document.addEventListener("change", () => {
     saveUserSettings();
     toggleDisplayOfElements();
   });
 
-  document.addEventListener("click", (e) => {
-    const EVENTNAME = (<HTMLInputElement>e.target);
+  // Event listener for "click" event
+  document.addEventListener("click", (event: Event) => {
+    // Get the target element
+    const targetElement = event.target as HTMLInputElement;
 
-
-    switch (EVENTNAME.name) {
+    // Handle different target element names
+    switch (targetElement.name) {
       case "toggleTheme":
+        // Toggle the theme and save user settings
         userSettings.isDarkModeTheme = !userSettings.isDarkModeTheme;
         toggleTheme();
-        return saveUserSettings();
+        saveUserSettings();
+        break;
       case "isReplaceChars":
-        return toggleCheckboxChildElements(EVENTNAME.name, 'replaceChar');
+        // Toggle the child elements based on the checkbox state
+        toggleCheckboxChildElements(targetElement.name, 'replaceChar');
+        break;
       case "isSubfieldFields":
-        return toggleCheckboxChildElements(EVENTNAME.name, 'subField');
+        // Toggle the child elements based on the checkbox state
+        toggleCheckboxChildElements(targetElement.name, 'subField');
+        break;
       case "fieldAffixPosition":
-        return toggleDropDownChildElements(EVENTNAME.name, 'fieldAffix');
-      case "submitBtn": // If we press the submit button, perform the field formatting procedure and paste to clipboard
-        return formatFieldsAndCopyToClipboard();
-      case "previewBtn": // If we press the submit button, perform the field formatting procedure and display in the preview without copying to clipboard
-        return formatFieldsAndPreview();
+        // Toggle the child elements based on the dropdown value
+        toggleDropDownChildElements(targetElement.name, 'fieldAffix');
+        break;
+      case "submitBtn":
+        // Format fields and copy to clipboard
+        formatFieldsAndCopyToClipboard();
+        break;
+      case "previewBtn":
+        // Format fields and preview the output
+        formatFieldsAndPreview();
+        break;
       case "inputTab":
-        return changeTab(EVENTNAME, 'inputText', 'tabcontent', 'tablinks');
       case "outputTab":
-        return changeTab(EVENTNAME, 'outputText', 'tabcontent', 'tablinks');
+        // Change the active tab
+        changeTab(targetElement, 'inputText', 'tabcontent', 'tablinks');
+        break;
     }
   });
 }
+
 
 /**
  * Calls the toggle element functions to show/hide content in the page
@@ -198,35 +216,46 @@ function toggleDisplayOfElements() {
  * Loops through all the input elements of the page and will call the toggleCheckboxChildElements method for all checkboxes to show/hide their child content.
  */
 function toggleCheckboxes() {
-  // Get all elements with class="tabcontent" and hide them
-  let tabcontent = document.getElementsByTagName("input");
-  for (let i = 0; i < tabcontent.length; ++i) {
-    if ((<HTMLInputElement>tabcontent[i]).type === "checkbox") {
-      switch ((<HTMLInputElement>tabcontent[i]).id) {
-        case "isReplaceChars":
-          toggleCheckboxChildElements((<HTMLInputElement>tabcontent[i]).id, 'replaceChar');
-        case "isSubfieldFields":
-          toggleCheckboxChildElements((<HTMLInputElement>tabcontent[i]).id, 'subField');
-      }
+  // Get all checkbox elements and hide/show the corresponding child elements
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+  for (let i = 0; i < checkboxes.length; i++) {
+    const checkbox = checkboxes[i] as HTMLInputElement;
+
+    switch (checkbox.id) {
+      case "isReplaceChars":
+        toggleCheckboxChildElements(checkbox.id, 'replaceChar');
+        break;
+      case "isSubfieldFields":
+        toggleCheckboxChildElements(checkbox.id, 'subField');
+        break;
+      // Add more cases for other checkboxes as needed
     }
   }
 }
+
 
 /**
  * Loops through all the input elements of the page and will call the toggleDropDownChildElements method for all dropdowns to show/hide their child content.
  */
 function toggleDropdowns() {
-  // Get all elements with class="tabcontent" and hide them
-  let tabcontent = document.getElementsByTagName("select");
-  for (let i = 0; i < tabcontent.length; ++i) {
-    if ((<HTMLSelectElement>tabcontent[i]).type === "select-one") {
-      switch ((<HTMLSelectElement>tabcontent[i]).id) {
+  // Get all select elements and hide/show the corresponding dropdowns
+  const dropdowns = document.querySelectorAll("select");
+
+  for (let i = 0; i < dropdowns.length; i++) {
+    const dropdown = dropdowns[i] as HTMLSelectElement;
+
+    if (dropdown instanceof HTMLSelectElement) {
+      switch (dropdown.id) {
         case "fieldAffixPosition":
-          toggleDropDownChildElements((<HTMLSelectElement>tabcontent[i]).id, 'fieldAffix');
+          toggleDropDownChildElements(dropdown.id, 'fieldAffix');
+          break;
+        // Add more cases for other dropdowns as needed
       }
     }
   }
 }
+
 
 /**
  * Shows/Hide the child elements of a dropdown. Child elements are anything that is "nested" below them.
@@ -234,206 +263,261 @@ function toggleDropdowns() {
  * @param pChildClassName The child's class name to find in the DOM.
  */
 function toggleDropDownChildElements(pDropdownId: string, pChildClassName: string) {
-  let checkboxElement = (<HTMLInputElement>document.getElementById(pDropdownId));
-  // Get all elements with class="tabcontent" and hide them
-  let tabcontent = document.getElementsByClassName(pChildClassName);
-  for (let i = 0; i < tabcontent.length; ++i) {
-    if (checkboxElement.value !== "doNothing") {
-      (<HTMLInputElement>tabcontent[i]).style.display = "inline"
-    }
-    else { (<HTMLInputElement>tabcontent[i]).style.display = "none"; }
+  // Get the dropdown element
+  const dropdownElement = document.getElementById(pDropdownId) as HTMLSelectElement;
+
+  // Get all child elements with the specified class name
+  const tabcontent = document.querySelectorAll(`.${pChildClassName}`);
+
+  // Determine the display value based on the dropdown value
+  const displayValue = dropdownElement.value !== "doNothing" ? "inline" : "none";
+
+  // Get the length of the tabcontent array
+  const tabcontentLength = tabcontent.length;
+
+  // Loop through each tabcontent element and set the display style
+  for (let i = 0; i < tabcontentLength; i++) {
+    // Cast each tabcontent element as HTMLInputElement
+    const tabcontentElement = tabcontent[i] as HTMLInputElement;
+
+    // Set the display style based on the calculated value
+    tabcontentElement.style.display = displayValue;
   }
 }
+
 
 /**
  * Shows/Hide the child elements of a checkbox. Child elements are anything that is "nested" below them.
  * @param pCheckboxId The parent's checkbox id. Used to check wheter to show or hide the content
  * @param pChildClassName The child's class name to find in the DOM.
  */
-function toggleCheckboxChildElements(pCheckboxId: string, pChildClassName: string) {
-  let checkboxElement = (<HTMLInputElement>document.getElementById(pCheckboxId));
-  // Get all elements with class="tabcontent" and hide them
-  let tabcontent = document.getElementsByClassName(pChildClassName);
-  for (let i = 0; i < tabcontent.length; ++i) {
-    if (checkboxElement.checked) {
-      (<HTMLInputElement>tabcontent[i]).style.display = "inline"
-    }
-    else { (<HTMLInputElement>tabcontent[i]).style.display = "none"; }
+function toggleCheckboxChildElements(pCheckboxId: string, pChildClassName: string): void {
+  // Get the checkbox element based on the provided ID
+  const checkboxElement: HTMLInputElement = document.getElementById(pCheckboxId) as HTMLInputElement;
+
+  // Get all child elements with the provided class name
+  const childElements: NodeListOf<Element> = document.querySelectorAll(`.${pChildClassName}`);
+
+  // Determine the display value based on the checkbox state
+  const displayValue: string = checkboxElement.checked ? "inline" : "none";
+
+  // Iterate over the child elements and toggle their display
+  for (let i = 0; i < childElements.length; i++) {
+    // Cast childElement to HTMLElement to access the style property
+    const childElement: HTMLElement = childElements[i] as HTMLElement;
+    childElement.style.display = displayValue;
   }
 }
 
+
 function formatFieldsAndCopyToClipboard() {
   try {
-    const FORMATTED_OUTPUT: string = buildOutput();
-
-    // Assigns the outputted fields into the clipboard 
-    previewFormatting(FORMATTED_OUTPUT);
-
-    // Assigns the outputted fields into the clipboard 
-    storeOutputToClipboard(FORMATTED_OUTPUT);
-  }
-  catch (e) {
+    const formattedOutput = buildOutput();
+    previewFormatting(formattedOutput);
+    storeOutputToClipboard(formattedOutput);
+  } catch (e) {
     console.error(e);
   }
 }
 
 function formatFieldsAndPreview() {
   try {
-    const FORMATTED_OUTPUT: string = buildOutput();
-
-    // Assigns the outputted fields into the clipboard 
-    previewFormatting(FORMATTED_OUTPUT);
-  }
-  catch (e) {
+    const formattedOutput = buildOutput();
+    previewFormatting(formattedOutput);
+  } catch (e) {
     console.error(e);
   }
 }
 
 function buildOutput() {
-
+  // Get the input field information
   let fieldInfo = (<HTMLInputElement>document.getElementById("fieldInfo")).value;
   let loadStatement: string = "";
   ({ fieldInfo, loadStatement } = extractLoadSection(fieldInfo));
 
   let fromTableStatement: string = "";
-  // Check if the keywords Resident or From (case insensitive) are matched and not preceded directly by AS or a comma. This indicates it's a Table Load, not a field
   ({ fieldInfo, fromTableStatement } = extractFromSection(fieldInfo));
 
-  // Split the string into an array for each line break, trim records, then remove empty rows
+  // Split the field information into an array, trim and remove empty rows
   let fieldArray: string[] = fieldInfo
     .split(/[\r\n\\]+/)
     .map(s => s.trim())
-    .filter(function (str) { return str });
+    .filter(str => str);
 
-  fieldArray = parseFields(fieldArray); // Cleanup the input fields before formatting
+  // Clean up the input fields before formatting
+  fieldArray = parseFields(fieldArray);
 
-  const MAX_ARRAY_FIELD_LENGTH: number = Math.max(...(fieldArray.map(el => el.length))); // Get the longest field name to align the aliases
+  // Get the maximum length of the field names for alignment
+  const MAX_ARRAY_FIELD_LENGTH: number = Math.max(...fieldArray.map(el => el.length));
 
+  // Convert the array of field names to an array of Field objects
   let fieldArrayObject: Field[] = parseInputForFields(fieldArray, MAX_ARRAY_FIELD_LENGTH);
 
+  // Format field aliases if not in format-only mode
   if (!userSettings.isFormatOnly) {
     formatFieldAliases();
   }
 
-  let fieldsOutput: string[] = new Array();
-  if (loadStatement.length > 0) { fieldsOutput.push(loadStatement); } // Add Load statement that comes before the fields
-  fieldsOutput = fieldsOutput.concat(fieldArrayObjectToArrayOfString(sortArray(fieldArrayObject)).map((elem: string, i: number) => {
-    return insertCommaIntoArrayValue(elem, fieldArray.length, i);
-  })); // Add the Fields
-  if (fromTableStatement.length > 0) { fieldsOutput.push(fromTableStatement); } // Add the From/Resident after the fields
+  let output: string = "";
 
-  // Transform the array into a string with linebreaks between each record
-  return fieldsOutput.join("\r\n");
+  // Add the load statement before the fields if it exists
+  if (loadStatement.length > 0) {
+    output += loadStatement + "\r\n";
+  }
 
+  // Concatenate the formatted field strings with proper comma insertion
+  output += fieldArrayObjectToArrayOfString(sortArray(fieldArrayObject)).map((elem: string, i: number) =>
+    insertCommaIntoArrayValue(elem, fieldArray.length, i)
+  ).join("\r\n");
+
+  // Add the fromTable statement after the fields if it exists
+  if (fromTableStatement.length > 0) {
+    output += "\r\n" + fromTableStatement;
+  }
+
+  // Return the final output string
+  return output;
+
+  // Convert the array of field names to an array of Field objects
   function parseInputForFields(pFieldArray: string[], pMaxFieldLen: number) {
+    return pFieldArray.map((fieldName) => {
+      fieldName = fieldName.trim();
 
-    let fieldArrayObject: Field[] = new Array();
-
-    pFieldArray.forEach(e => {
-      let sourceField: Field = new Field();
-      let fieldName: string = e.trim();
       if (userSettings.isFormatOnly) {
         fieldName = fieldName.substring(fieldName.search(REGEX_MATCH_AS));
       }
-      sourceField.fieldSourceName = AddFieldDelimiter(fieldName).padEnd(userSettings.isAlignAliases ? pMaxFieldLen + 2 : 0, ' '); // Align the "AS" used in aliasing so that all the aliases start at the same character index
-      sourceField.fieldAliasName = fieldName;
-      sourceField.isKeyField = fieldIsAKeyField(fieldName); // Check if the key field is a key Identifier using the configuration
-      fieldArrayObject.push(sourceField);
-    }
-    );
 
-    return fieldArrayObject;
+      const sourceField: Field = new Field();
+      sourceField.fieldSourceName = userSettings.isAlignAliases ? AddFieldDelimiter(fieldName) + ' '.repeat(pMaxFieldLen - fieldName.length + 2) : AddFieldDelimiter(fieldName);
+      sourceField.fieldAliasName = fieldName;
+      sourceField.isKeyField = fieldIsAKeyField(fieldName);
+
+      return sourceField;
+    });
   }
 
+  // Format the field aliases
   function formatFieldAliases() {
-    for (let i = 0; i < fieldArrayObject.length; i++) {
-      if (!fieldArrayObject[i].isKeyField || (fieldArrayObject[i].isKeyField && !userSettings.isIgnoreFormatOnKeyField)) {
-        if (userSettings.isSubfieldFieldName) { fieldArrayObject[i].fieldAliasName = applySubField(fieldArrayObject[i].fieldAliasName); };
-        if (userSettings.isReplaceChars) { fieldArrayObject[i].fieldAliasName = replaceChars(fieldArrayObject[i].fieldAliasName); }
-        // Add spaces then add the prefix or suffix and finally wrap with double quotes ot square brackets
-        if (userSettings.isSpaceOutCapitals) { fieldArrayObject[i].fieldAliasName = spaceOutCapitals(fieldArrayObject[i]); }
-        fieldArrayObject[i].fieldAliasName = addAffix(fieldArrayObject[i]);
-        fieldArrayObject[i].fieldAliasName = setFieldCase(fieldArrayObject[i].fieldAliasName);
-        if (fieldArrayObject[i].isKeyField) { fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName); };
-      }
-      else { fieldArrayObject[i].fieldAliasName = addKeyAffixToAlias(fieldArrayObject[i].fieldAliasName); }
+    fieldArrayObject.forEach((field) => {
+      if ((!field.isKeyField || (field.isKeyField && !userSettings.isIgnoreFormatOnKeyField))) {
+        if (userSettings.isSubfieldFieldName) {
+          field.fieldAliasName = applySubField(field.fieldAliasName);
+        }
 
-      fieldArrayObject[i].fieldAliasName = AddFieldDelimiter(fieldArrayObject[i].fieldAliasName);
-    }
+        if (userSettings.isReplaceChars) {
+          field.fieldAliasName = replaceChars(field.fieldAliasName);
+        }
+
+        if (userSettings.isSpaceOutCapitals) {
+          field.fieldAliasName = spaceOutCapitals(field);
+        }
+
+        field.fieldAliasName = addAffix(field);
+        field.fieldAliasName = setFieldCase(field.fieldAliasName);
+
+        if (field.isKeyField) {
+          field.fieldAliasName = addKeyAffixToAlias(field.fieldAliasName);
+        }
+
+        field.fieldAliasName = AddFieldDelimiter(field.fieldAliasName);
+      }
+    });
   }
 }
+
+
 
 function fieldArrayObjectToArrayOfString(pFieldArrayObject: Field[]): string[] {
-
-  let fieldArrayStrings: string[] = new Array();
-  for (let i = 0; i < pFieldArrayObject.length; i++) {
-    fieldArrayStrings.push(pFieldArrayObject[i].getFieldNameWithAlias());
-  }
-
-  return fieldArrayStrings;
+  return pFieldArrayObject.map(field => field.getFieldNameWithAlias());
 }
 
+
+/**
+ * Extracts the fromTableStatement from the given fieldInfo string.
+ * @param pFieldInfo - The fieldInfo string to extract from.
+ * @returns An object containing the updated fieldInfo and the extracted fromTableStatement.
+ */
 function extractFromSection(pFieldInfo: string) {
-  const SOURCE_TABLE_INDEX = pFieldInfo.search(/\w*(?<!((as)|,)\s*)(?<!\["`)(From|Resident)\b(?![\w\s]*[\]"`])/gsi);
+  const FROM_LABEL = 'From';
 
-  let fromTableStatement: string = "";
+  // Find the index of the From/Resident keyword preceded by certain conditions
+  const sourceTableIndex = pFieldInfo.search(/\w*(?<!((as)|,)\s*)(?<!\["`)(From|Resident)\b(?![\w\s]*[\]"`])/gsi);
 
-  if (SOURCE_TABLE_INDEX > -1) {
-    fromTableStatement = pFieldInfo.slice(SOURCE_TABLE_INDEX).trimEnd(); // Take everyting up to the Load word
-    pFieldInfo = pFieldInfo.slice(0, SOURCE_TABLE_INDEX); // Remove the Load and keep everything to the end of string
-  }
+  // Extract the fromTableStatement if found, otherwise set it as an empty string
+  const fromTableStatement = sourceTableIndex > -1 ? pFieldInfo.slice(sourceTableIndex).trimEnd() : '';
 
+  // Update pFieldInfo by removing the fromTableStatement if found
+  pFieldInfo = sourceTableIndex > -1 ? pFieldInfo.slice(0, sourceTableIndex) : pFieldInfo;
+
+  // Return the updated pFieldInfo and the extracted fromTableStatement
   return { fieldInfo: pFieldInfo, fromTableStatement };
 }
 
-function extractLoadSection(pFieldInfo: string,) {
-  const LOAD_STATEMENT_INDEX = pFieldInfo.search(/\w*(?<!,\s*)Load/gsi);
-
+/**
+ * Extracts the loadStatement from the given fieldInfo string.
+ * @param pFieldInfo - The fieldInfo string to extract from.
+ * @returns An object containing the updated fieldInfo and the extracted loadStatement.
+ */
+function extractLoadSection(pFieldInfo: string) {
   const LOAD_LABEL = 'Load';
 
-  let loadStatement: string = "";
+  // Find the index of the Load keyword preceded by certain conditions
+  const loadStatementIndex = pFieldInfo.search(/\w*(?<!,\s*)Load/gsi);
 
-  if (LOAD_STATEMENT_INDEX > -1) {
-    loadStatement = pFieldInfo.slice(0, LOAD_STATEMENT_INDEX + LOAD_LABEL.length).trimStart(); // Take everyting up to the Load word
-    pFieldInfo = pFieldInfo.slice(LOAD_STATEMENT_INDEX + LOAD_LABEL.length); // Remove the Load and keep everything to the end of string
-  }
+  // Extract the loadStatement if found, otherwise set it as an empty string
+  const loadStatement = loadStatementIndex > -1 ? pFieldInfo.slice(0, loadStatementIndex + LOAD_LABEL.length).trimStart() : '';
+
+  // Update pFieldInfo by removing the loadStatement if found
+  pFieldInfo = loadStatementIndex > -1 ? pFieldInfo.slice(loadStatementIndex + LOAD_LABEL.length) : pFieldInfo;
+
+  // Return the updated pFieldInfo and the extracted loadStatement
   return { fieldInfo: pFieldInfo, loadStatement };
 }
 
-function parseFields(pFieldArray: string[]) {
-  for (let i = 0; i < pFieldArray.length; i++) {
-    if (userSettings.useAliasAsSourceName) { pFieldArray[i] = pFieldArray[i].replace(/(.+\sAS\s+)/i, ''); } // (.+\sAS\s+) matches everything up to the AS part of the alias
-    else if (pFieldArray[i].search(REGEX_MATCH_AS) !== -1) {
-      pFieldArray[i] = pFieldArray[i].substring(0, pFieldArray[i].search(REGEX_MATCH_AS));
-    }
-    pFieldArray[i] = removeDelimiter(pFieldArray[i]);
-  }
+function parseFields(pFieldArray: string[]): string[] {
+  const removeAliasRegex = /(.+\sAS\s+)/i;
 
-  return pFieldArray;
+  // Parse and clean up each field in pFieldArray
+  return pFieldArray.map((field) => {
+    if (userSettings.useAliasAsSourceName) {
+      // Remove the AS portion from the field if useAliasAsSourceName is enabled
+      return field.replace(removeAliasRegex, '');
+    } else {
+      // Extract the field name based on the AS keyword index
+      const asIndex = field.search(REGEX_MATCH_AS);
+      return asIndex !== -1 ? field.substring(0, asIndex) : field;
+    }
+  }).map(removeDelimiter); // Clean up the field by removing the delimiter if needed
 }
+
 
 function sortArray(pFieldArray: Field[]): Field[] {
   if (userSettings.fieldSortOrder === "key") {
-    pFieldArray = pFieldArray.sort((a, b) => a.isKeyField && !b.isKeyField ? -1 : !a.isKeyField && b.isKeyField ? 1
-      : (a.isKeyField && b.isKeyField && a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1
-        : (a.isKeyField && b.isKeyField && b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1
-          : 0)
+    pFieldArray.sort((a, b) => {
+      if (a.isKeyField && !b.isKeyField) {
+        return -1;
+      }
+      if (!a.isKeyField && b.isKeyField) {
+        return 1;
+      }
+      return a.fieldAliasName.localeCompare(b.fieldAliasName, undefined, { sensitivity: 'case' });
+    });
   } else if (userSettings.fieldSortOrder === "all") {
-    pFieldArray = pFieldArray.sort((a, b) => (a.fieldAliasName.toUpperCase() > b.fieldAliasName.toUpperCase()) ? 1
-      : ((b.fieldAliasName.toUpperCase() > a.fieldAliasName.toUpperCase()) ? -1
-        : 0))
+    pFieldArray.sort((a, b) => a.fieldAliasName.localeCompare(b.fieldAliasName, undefined, { sensitivity: 'case' }));
   }
 
   return pFieldArray;
 }
 
+
 function assembleFieldAndAlias(pSourceFieldName: string, pAliasField: string): string {
-  return userSettings.isFormatOnly ? pSourceFieldName : pSourceFieldName + " AS " + pAliasField;
+  return userSettings.isFormatOnly ? pSourceFieldName : `${pSourceFieldName} AS ${pAliasField}`;
 }
 
 function previewFormatting(formatOutput: string) {
-  (<HTMLInputElement>document.getElementById("formattingOutput")).value = formatOutput;
-  changeTab((<HTMLInputElement>document.getElementById("outputTab")), 'outputText', 'tabcontent', 'tablinks');
+  const formattingOutput = document.getElementById("formattingOutput") as HTMLInputElement;
+  formattingOutput.value = formatOutput;
+  changeTab(document.getElementById("outputTab") as HTMLInputElement, 'outputText', 'tabcontent', 'tablinks');
 }
 
 function coalesce([]) {
@@ -441,11 +525,13 @@ function coalesce([]) {
 }
 
 function storeOutputToClipboard(newClip: string): void {
-  navigator.clipboard.writeText(newClip).then(function () {
-    displayMessageInHTMLElement('transformLbl', 'Success!', 500);
-  }, function () {
-    displayMessageInHTMLElement('transformLbl', 'Failed... Something went wrong', 2000);
-  });
+  navigator.clipboard.writeText(newClip)
+    .then(() => {
+      displayMessageInHTMLElement('transformLbl', 'Success!', 500);
+    })
+    .catch(() => {
+      displayMessageInHTMLElement('transformLbl', 'Failed... Something went wrong', 2000);
+    });
 }
 
 /**
@@ -469,10 +555,9 @@ function AddFieldDelimiter(pInputField: string): string {
  * @returns {string} A string with an added comma.
  */
 function insertCommaIntoArrayValue(pFieldValue: string, pArraySize: number, pArrayIndex: number): string {
-
-  const IS_LEADING_COMMA: boolean = userSettings.commaPosition === 'lc' ? true : false;
-  const IS_FINAL_ROW: boolean = pArraySize - 1 === pArrayIndex ? true : false;
-  const IS_FIRST_ROW: boolean = pArrayIndex === 0 ? true : false;
+  const IS_LEADING_COMMA: boolean = userSettings.commaPosition === 'lc';
+  const IS_FINAL_ROW: boolean = pArraySize - 1 === pArrayIndex;
+  const IS_FIRST_ROW: boolean = pArrayIndex === 0;
 
   let outputText: string;
 
@@ -492,22 +577,20 @@ function insertCommaIntoArrayValue(pFieldValue: string, pArraySize: number, pArr
  * @param {string} pCharToRemove The specified character to remove.
  * @returns {Array} An array of strings where the first and last characters have been removed if matching the input and if the character was found.
  */
-function removeCharacter(pFieldValue: string, pCharToRemove: string): string[] {
+function removeCharacter(pFieldValue: string, pCharToRemove: string): [string, boolean] {
+  let isCharacterFound: boolean = false;
 
-  let isCharacterFound: string = "false";
-
-  if (left(pFieldValue, 1) === pCharToRemove) {
+  if (pFieldValue.startsWith(pCharToRemove)) {
     pFieldValue = pFieldValue.slice(1).trim();
-    isCharacterFound = "true";
+    isCharacterFound = true;
   }
-  if (right(pFieldValue, 1) === pCharToRemove) {
+
+  if (pFieldValue.endsWith(pCharToRemove)) {
     pFieldValue = pFieldValue.slice(0, -1).trim();
-    isCharacterFound = "true";
+    isCharacterFound = true;
   }
 
-  let returnInformation: Array<string> = [pFieldValue, isCharacterFound]
-
-  return returnInformation;
+  return [pFieldValue, isCharacterFound];
 }
 
 /**
@@ -541,48 +624,59 @@ function left(pStr: string, pChrLength: number): string {
  * @returns {string} A string prefixed or suffixed with the configured affix.
  */
 function addAffix(pFieldValue: Field): string {
-  let fieldAffixValue: string = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
-  if (userSettings.fieldAffixPosition === "doNothing" || userSettings.isIgnoreFormatOnKeyField && pFieldValue.isKeyField) {
+  const fieldAffixValue: string = (<HTMLInputElement>document.getElementById("fieldAffixText")).value;
+
+  if (userSettings.fieldAffixPosition === "doNothing" || (userSettings.isIgnoreFormatOnKeyField && pFieldValue.isKeyField)) {
     return pFieldValue.fieldAliasName;
   }
-  else if (!userSettings.isIgnoreFormatOnKeyField && pFieldValue.isKeyField && userSettings.fieldAffixPosition === 'prefix' && userSettings.keySourcePosition === 'start') {
-    return pFieldValue.fieldAliasName.slice(0, userSettings.keySourceIdentifier.length) + fieldAffixValue + pFieldValue.fieldAliasName.slice(userSettings.keySourceIdentifier.length);
+
+  if (!userSettings.isIgnoreFormatOnKeyField && pFieldValue.isKeyField && userSettings.fieldAffixPosition === 'prefix' && userSettings.keySourcePosition === 'start') {
+    const keyIdentifierLength = userSettings.keySourceIdentifier.length;
+    return `${pFieldValue.fieldAliasName.slice(0, keyIdentifierLength)}${fieldAffixValue}${pFieldValue.fieldAliasName.slice(keyIdentifierLength)}`;
   }
 
   return userSettings.fieldAffixPosition === 'suffix'
-    ? pFieldValue.fieldAliasName + fieldAffixValue
-    : fieldAffixValue + pFieldValue.fieldAliasName;
+    ? `${pFieldValue.fieldAliasName}${fieldAffixValue}`
+    : `${fieldAffixValue}${pFieldValue.fieldAliasName}`;
 }
 
-function removeDelimiter(pFieldValue: string) {
-  let returnInfo: Array<string>;
+function removeDelimiter(pFieldValue: string): string {
+  const fieldDelimiterList = ['[', ']', '"', ",", '`'];
 
-  let fieldDelimiterList = ['[', ']', '"', ",", '`'];
-  for (let j = 0; j < fieldDelimiterList.length; j++) {
+  let isCharacterFound = false;
 
-    returnInfo = removeCharacter(pFieldValue, fieldDelimiterList[j]);
+  for (const delimiter of fieldDelimiterList) {
+    let returnInfo: [string, boolean] = removeCharacter(pFieldValue, delimiter);
+    pFieldValue = returnInfo[0];
 
-    pFieldValue = returnInfo[0]; // Getting the string information of the transformed string
+    if (returnInfo[1]) {
+      isCharacterFound = true;
+      break;
+    }
+  }
 
-    // Special case: Because we iterate over the list in a specific order, it's possible the comma may happen before the other characters.
-    // If one of the character is found, start the field delimiter loop over to make sure we didn't miss a character that was not first or last.
-    // e.g. ,"my field" will need to start over to make sure we don't miss the double quote right after the comma
-    if (JSON.parse(returnInfo[1])) { j = -1; }
+  if (isCharacterFound) {
+    return removeDelimiter(pFieldValue); // Restart the loop to check for any missed delimiters
   }
 
   return pFieldValue;
 }
 
-function fieldIsAKeyField(pInputString: string) {
-  let isKeyField = false;
-  if (userSettings.keySourcePosition === "start" && userSettings.keySourceIdentifier.trim().length > 0) {
-    isKeyField = pInputString.startsWith(userSettings.keySourceIdentifier) ? true : false;
-  }
-  else if (userSettings.keySourcePosition === "end" && userSettings.keySourceIdentifier.trim().length > 0) {
-    isKeyField = pInputString.endsWith(userSettings.keySourceIdentifier) ? true : false;
+function fieldIsAKeyField(pInputString: string): boolean {
+  if (userSettings.keySourceIdentifier.trim().length === 0) {
+    return false;
   }
 
-  return isKeyField;
+  const inputString = pInputString.trim();
+  const keySourceIdentifier = userSettings.keySourceIdentifier.trim();
+
+  if (userSettings.keySourcePosition === "start") {
+    return inputString.startsWith(keySourceIdentifier);
+  } else if (userSettings.keySourcePosition === "end") {
+    return inputString.endsWith(keySourceIdentifier);
+  }
+
+  return false;
 }
 
 function isBlank(str: string) {
@@ -609,21 +703,22 @@ function spaceOutCapitals(pInputString: Field): string {
  * @param {string} pContentId The tab to set active
  */
 function changeTab(event: HTMLInputElement, pContentId: string, tabContentName: string, tabClassName: string): void {
-  // Get all elements with class="tabcontent" and hide them
-  let tabcontent = document.getElementsByClassName(tabContentName);
+  const tabcontent = document.getElementsByClassName(tabContentName);
+  const tablinks = document.getElementsByClassName(tabClassName);
+
+  // Hide all tab content
   for (let i = 0; i < tabcontent.length; i++) {
-    (<HTMLInputElement>tabcontent[i]).style.display = "none";
+    (tabcontent[i] as HTMLElement).style.display = "none";
   }
 
-  // Get all elements with class="tablinks" and remove the class "active"
-  let tablinks = document.getElementsByClassName(tabClassName);
+  // Remove "active" class from all tab links
   for (let i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
+    tablinks[i].classList.remove("active");
   }
 
-  // Show the current tab, and add an "active" class to the button that opened the tab
-  (<HTMLInputElement>document.getElementById(pContentId)).style.display = "block";
-  event.className += " active";
+  const currentTabContent = document.getElementById(pContentId) as HTMLElement;
+  currentTabContent.style.display = "block"; // Display the selected tab content
+  event.classList.add("active"); // Add "active" class to the clicked tab
 }
 
 
@@ -632,12 +727,10 @@ function replaceChars(pInputString: string): string {
 }
 
 function setFieldCase(pInputString: string): string {
-
   let fieldString = pInputString;
+  const changeStringCase = userSettings.changeStringCase;
 
-  switch (userSettings.changeStringCase) {
-    case "doNothing":
-      break;
+  switch (changeStringCase) {
     case "upper":
       fieldString = fieldString.toUpperCase();
       break;
@@ -645,26 +738,39 @@ function setFieldCase(pInputString: string): string {
       fieldString = fieldString.toLowerCase();
       break;
     case "capitalize":
-      fieldString = fieldString.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+      fieldString = capitalize(fieldString);
       break;
     case "capitalizeFirst":
-      fieldString = fieldString.toLowerCase().replace(/^.{1}/g, m => m.toUpperCase());
+      fieldString = capitalizeFirst(fieldString);
       break;
-    default: break;
-  };
+    default:
+      break;
+  }
 
   return fieldString;
 }
 
-function applySubField(pIntputString: string): string {
-  let str: string = pIntputString;
+function capitalize(str: string): string {
+  return str.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+}
 
-  if (userSettings.subfieldSeparator.length > 0 || !isNaN(userSettings.subfieldNo)) {
-    const SUB_FIELD_ARRAY = pIntputString.split(userSettings.subfieldSeparator);
-    if (userSettings.subfieldNo - 1 > SUB_FIELD_ARRAY.length || userSettings.subfieldNo - 1 === SUB_FIELD_ARRAY.length) {
-      str = SUB_FIELD_ARRAY[0];
+function capitalizeFirst(str: string): string {
+  return str.toLowerCase().replace(/^.{1}/g, m => m.toUpperCase());
+}
+
+function applySubField(pInputString: string): string {
+  let str: string = pInputString;
+
+  const subfieldSeparator = userSettings.subfieldSeparator;
+  const subfieldNo = userSettings.subfieldNo;
+
+  if (subfieldSeparator.length > 0 || !isNaN(subfieldNo)) {
+    const subFieldArray = pInputString.split(subfieldSeparator);
+
+    if (subfieldNo - 1 >= 0 && subfieldNo - 1 < subFieldArray.length) {
+      str = subFieldArray[subfieldNo - 1];
     } else {
-      str = SUB_FIELD_ARRAY[userSettings.subfieldNo - 1];
+      str = subFieldArray[0];
     }
   }
 
@@ -676,58 +782,33 @@ function addKeyAffixToAlias(pFieldAliasName: string): string {
 }
 
 
-function toggleTheme(): any {
+function toggleTheme(): void {
+  const toggleThemeButton = document.getElementById("toggleTheme") as HTMLButtonElement;
+  const isDarkModeTheme = userSettings.isDarkModeTheme;
 
-  if (userSettings.isDarkModeTheme) {
-    (<HTMLButtonElement>document.getElementById("toggleTheme")).value = "dark";
-    (<HTMLButtonElement>document.getElementById("toggleTheme")).innerText = "Toggle Light Mode";
-  }
-  else {
-    (<HTMLButtonElement>document.getElementById("toggleTheme")).value = "light";
-    (<HTMLButtonElement>document.getElementById("toggleTheme")).innerText = "Toggle Dark Mode";
-  }
+  toggleThemeButton.value = isDarkModeTheme ? "dark" : "light";
+  toggleThemeButton.innerText = `Toggle ${isDarkModeTheme ? "Light" : "Dark"} Mode`;
 
-  let tabElements = (<HTMLCollection>document.getElementsByClassName("tab"));
-  for (let i = 0; i < tabElements.length; i++) {
-    tabElements[i].classList.toggle("tablight");
-  }
+  const toggleClass = (elements: NodeListOf<Element>, className: string) => {
+    elements.forEach(element => element.classList.toggle(className));
+  };
 
-  let flexSectElements = (<HTMLCollection>document.getElementsByClassName("flex-sect"));
-  for (let i = 0; i < flexSectElements.length; i++) {
-    flexSectElements[i].classList.toggle("flex-sect-light");
-  }
+  const classNames = [
+    "tab",
+    "flex-sect",
+    "fieldTextInput",
+    "smallInput",
+    "label",
+    "option-label",
+    "dropdown",
+    "header",
+  ];
 
-  let fieldTextInputs = (<HTMLCollection>document.getElementsByClassName("fieldTextInput"));
-  for (let i = 0; i < fieldTextInputs.length; i++) {
-    fieldTextInputs[i].classList.toggle("fieldTextInput-light");
-  }
-
-  let smallFieldTextInputs = (<HTMLCollection>document.getElementsByClassName("smallInput"));
-  for (let i = 0; i < smallFieldTextInputs.length; i++) {
-    smallFieldTextInputs[i].classList.toggle("smallInput-light");
-  }
-
-  let labels = (<HTMLCollection>document.getElementsByClassName("label"));
-  for (let i = 0; i < labels.length; i++) {
-    labels[i].classList.toggle("label-light");
-  }
-
-  let optionLabels = (<HTMLCollection>document.getElementsByClassName("option-label"));
-  for (let i = 0; i < optionLabels.length; i++) {
-    optionLabels[i].classList.toggle("option-label-light");
-  }
-
-  let dropdowns = (<HTMLCollection>document.getElementsByClassName("dropdown"));
-  for (let i = 0; i < dropdowns.length; i++) {
-    dropdowns[i].classList.toggle("dropdown-light");
-  }
-
-
-  let headers = (<HTMLCollection>document.getElementsByTagName("header"));
-  for (let i = 0; i < headers.length; i++) {
-    headers[i].classList.toggle(".header-light");
-  }
+  classNames.forEach(className => {
+    toggleClass(document.querySelectorAll(`.${className}`), `${className}-light`);
+  });
 }
+
 
 function initializeTheme() {
   if (!userSettings.isDarkModeTheme) {
@@ -737,10 +818,7 @@ function initializeTheme() {
 
 /**asd */
 String.prototype.replaceAll = function (strReplace: string, strWith: any): string {
-  // See http://stackoverflow.com/a/3561711/556609
-  let esc = strReplace.toString().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  let reg = new RegExp(esc, 'ig');
-  return this.replace(reg, strWith.toString());
+  return this.split(strReplace).join(strWith.toString());
 };
 
 let userSettings = new UserSettings();
@@ -749,8 +827,14 @@ let userSettings = new UserSettings();
  * and add a click handler.
  * If we couldn't inject the script, handle the error.
  */
-try {
-  chrome.storage.local.get(['userConfiguration'], (result) => {
+(async () => {
+  try {
+    const result: any = await new Promise((resolve) => {
+      chrome.storage.local.get(['userConfiguration'], (result) => {
+        resolve(result);
+      });
+    });
+
     if (result.userConfiguration !== undefined) {
       userSettings.loadFieldsFromStorage(result.userConfiguration);
     }
@@ -760,8 +844,7 @@ try {
     initializeTheme();
 
     listenForClicks();
-  });
-}
-catch (e: any) {
-  console.log(e.message);
-}
+  } catch (e: any) {
+    console.log(e.message);
+  }
+})();
