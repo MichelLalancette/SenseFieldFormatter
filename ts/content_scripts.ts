@@ -1,3 +1,5 @@
+// import * as CodeMirror from 'codemirror';
+
 // The mutation observer that will be called whenever a change happens to elements with the class qv-client
 function handleMutation(mutation: MutationRecord): void {
   try {
@@ -118,10 +120,10 @@ function copyToClipboardPromise(textToCopy: string): Promise<void> {
   });
 }
 
-const targetURLPattern = "https://*/dataloadeditor*"; // URL pattern with wildcards
 
-function addFormatButton(): void {
-  const targetURLPattern = "https://nortera.us.qlikcloud.com/dataloadeditor*"; // URL pattern with wildcards
+const targetURLPattern = /^https:\/\/.*\/dataloadeditor.*/; // URL pattern with wildcards
+
+function addFormatButton(): void {  
   const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
 
   if (toolbarDiv) {
@@ -135,20 +137,62 @@ function addFormatButton(): void {
   function applyQuickFormat(): void {
     const selectedText = window.getSelection()?.toString() ?? "";
     const transformedText = selectedText.toUpperCase();
-    document.execCommand("insertText", false, transformedText);
+    overwriteHighlightedText(transformedText);
   }
 }
 
-// Check URL on initial page load
-if (window.location.href.match(targetURLPattern)) {
+function overwriteHighlightedText(newValue: string) {
+  const codeMirror = (window as any).CodeMirror;
+  
+  if (codeMirror && codeMirror.hint) {
+    const editor = codeMirror.hint.editor;
+    const selectedText = editor.getSelection();
+    
+    if (selectedText) {
+      editor.replaceSelection(newValue);
+    }
+  }
+}
+
+
+
+function handleToolbarMutation(mutations: MutationRecord[], observer: MutationObserver): void {
+  mutations.forEach((mutation) => {
+    if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+      const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
+      if (toolbarDiv) {
+        observer.disconnect(); // Stop observing once the toolbarDiv is found
+        addFormatButton();
+      }
+    }
+  });
+}
+
+// Create a MutationObserver instance
+const observer = new MutationObserver(handleToolbarMutation);
+
+// Start observing changes in the document
+observer.observe(document, { childList: true, subtree: true });
+
+// Check if the toolbarDiv already exists
+const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
+if (toolbarDiv) {
+  observer.disconnect(); // Stop observing if the toolbarDiv already exists
   addFormatButton();
 }
 
-// Observe URL changes
-window.addEventListener("popstate", handleURLChange);
+function injectCodeMirrorScript() {
+  const script = document.createElement('script');
+  script.src = 'path/to/codemirror.js'; // Replace with the correct path to CodeMirror script file
+  script.onload = function() {
+    // CodeMirror script has been loaded
+    // You can now use the CodeMirror library
+    const codeMirror = (window as any).CodeMirror;
+    // Rest of your code...
+  };
 
-function handleURLChange(): void {
-  if (window.location.href.match(targetURLPattern)) {
-    addFormatButton();
-  }
+  document.head.appendChild(script);
 }
+
+// Call the function to inject the CodeMirror script
+injectCodeMirrorScript();

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // The mutation observer that will be called whenever a change happens to elements with the class qv-client
 function handleMutation(mutation) {
     try {
@@ -17,6 +18,10 @@ function handleMutation(mutation) {
         console.log(error);
     }
 }
+/**
+ * CreateCopyOutputDiv creates a div with elements inside to allow the copying of the expression editor output.
+ * @returns Returns a div containing a button to copy the output and a label to write error messages.
+ */
 function CreateCopyOutputDiv() {
     // Create a div element for the copy output section
     const copyOutputDiv = document.createElement('div');
@@ -75,126 +80,77 @@ MUTATION_OBSERVER.observe(qlikSenseAppPage, {
  * @returns Returns a void Promise
  */
 function copyToClipboardPromise(textToCopy) {
-  return new Promise((resolve, reject) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(textToCopy)
-        .then(() => {
-          // console.log('Text copied to clipboard:', textToCopy);
-          resolve();
-        })
-        .catch((error) => {
-          console.error('Failed to copy text to clipboard:', error);
-          reject(error);
-        });
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = textToCopy;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      textArea.style.top = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          console.log('Text copied to clipboard:', textToCopy);
-          resolve();
-        } else {
-          console.error('Copy command failed.');
-          reject(new Error('Copy command failed.'));
+    return new Promise((resolve, reject) => {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => resolve())
+                .catch(() => reject());
         }
-      } catch (error) {
-        console.error('Failed to copy text to clipboard:', error);
-        reject(error);
-      }
-      textArea.remove();
-    }
-  });
-}
-
-  
-const targetURLPattern = /^https:\/\/.*\/dataloadeditor.*$/; // Regular expression pattern with wildcards
-
-function pasteTextFromClipboard() {
-  console.log('Pasting text from clipboard...');
-  const textarea = document.createElement('textarea');
-  document.body.appendChild(textarea);
-  textarea.focus();
-  document.execCommand('paste');
-  const pastedText = textarea.value;
-  textarea.remove();
-  console.log('Pasted text:', pastedText);
-  // Perform any actions with the pasted text
-}
-
-function getSelectedText() {
-  const selection = window.getSelection();
-  let selectedText = "";
-
-  if (selection && selection.anchorNode && selection.anchorNode.lastChild) {
-    selectedText = selection.anchorNode.lastChild.value.toLowerCase();
-  }
-
-  return selectedText;
-}
-
-function applyQuickFormat() {
-  const selectedText = getSelectedText();
-  const transformedText = selectedText.toUpperCase();
-  copyToClipboardPromise(transformedText)
-    .then(() => {
-      console.log('Text copied to clipboard:', transformedText);
-      // pasteTextFromClipboard();
-    })
-    .catch((error) => {
-      console.error('Failed to copy text to clipboard:', error);
+        else {
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                successful ? resolve() : reject();
+            }
+            catch (error) {
+                reject();
+            }
+            textArea.remove();
+        }
     });
 }
-
+const targetURLPattern = /^https:\/\/.*\/dataloadeditor.*/; // URL pattern with wildcards
 function addFormatButton() {
-  const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
-  if (toolbarDiv && !toolbarDiv.hasButton) {
-    const button = document.createElement("button");
-    button.textContent = "Apply Quick Format";
-    button.addEventListener("click", applyQuickFormat);
-    toolbarDiv.appendChild(button);
-    toolbarDiv.hasButton = true;
-  }
-}
-
-function handleURLChange() {
-  if (targetURLPattern.test(window.location.href)) {
-    observeDOMChanges();
-  }
-}
-
-function observeDOMChanges() {
-  const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']");
-  if (toolbarDiv && !toolbarDiv.hasButton) {
-    addFormatButton();
-    toolbarDiv.hasButton = true;
-  }
-
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']");
-      if (toolbarDiv && !toolbarDiv.hasButton) {
-        observer.disconnect();
-        addFormatButton();
-        toolbarDiv.hasButton = true;
-        break;
-      }
+    const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
+    if (toolbarDiv) {
+        const button = document.createElement("button");
+        button.textContent = "Apply Quick Format";
+        button.addEventListener("click", applyQuickFormat);
+        toolbarDiv.appendChild(button);
     }
-  });
-
-  observer.observe(document, { childList: true, subtree: true });
+    function applyQuickFormat() {
+        var _a, _b;
+        const selectedText = (_b = (_a = window.getSelection()) === null || _a === void 0 ? void 0 : _a.toString()) !== null && _b !== void 0 ? _b : "";
+        const transformedText = selectedText.toUpperCase();
+        overwriteHighlightedText(transformedText);
+    }
+}
+function overwriteHighlightedText(newValue) {
+    const codeMirror = window.CodeMirror;
+    if (codeMirror && codeMirror.hint) {
+        const editor = codeMirror.hint.editor;
+        const selectedText = editor.getSelection();
+        if (selectedText) {
+            editor.replaceSelection(newValue);
+        }
+    }
+}
+function handleToolbarMutation(mutations, observer) {
+    mutations.forEach((mutation) => {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+            const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
+            if (toolbarDiv) {
+                observer.disconnect(); // Stop observing once the toolbarDiv is found
+                addFormatButton();
+            }
+        }
+    });
+}
+// Create a MutationObserver instance
+const observer = new MutationObserver(handleToolbarMutation);
+// Start observing changes in the document
+observer.observe(document, { childList: true, subtree: true });
+// Check if the toolbarDiv already exists
+const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
+if (toolbarDiv) {
+    observer.disconnect(); // Stop observing if the toolbarDiv already exists
+    addFormatButton();
 }
 
-// Check URL on initial page load
-if (targetURLPattern.test(window.location.href)) {
-  observeDOMChanges();
-}
-
-// Observe URL changes
-window.addEventListener("popstate", handleURLChange);
