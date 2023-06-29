@@ -117,38 +117,3 @@ function copyToClipboardPromise(textToCopy: string): Promise<void> {
     }
   });
 }
-
-const targetURLPattern = "https://*/dataloadeditor*"; // URL pattern with wildcards
-
-function addFormatButton(): void {
-  const targetURLPattern = "https://nortera.us.qlikcloud.com/dataloadeditor*"; // URL pattern with wildcards
-  const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
-
-  if (toolbarDiv) {
-    const button = document.createElement("button");
-    button.textContent = "Apply Quick Format";
-    button.addEventListener("click", applyQuickFormat);
-
-    toolbarDiv.appendChild(button);
-  }
-
-  function applyQuickFormat(): void {
-    const selectedText = window.getSelection()?.toString() ?? "";
-    const transformedText = selectedText.toUpperCase();
-    document.execCommand("insertText", false, transformedText);
-  }
-}
-
-// Check URL on initial page load
-if (window.location.href.match(targetURLPattern)) {
-  addFormatButton();
-}
-
-// Observe URL changes
-window.addEventListener("popstate", handleURLChange);
-
-function handleURLChange(): void {
-  if (window.location.href.match(targetURLPattern)) {
-    addFormatButton();
-  }
-}
