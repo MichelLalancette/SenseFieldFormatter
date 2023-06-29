@@ -75,57 +75,126 @@ MUTATION_OBSERVER.observe(qlikSenseAppPage, {
  * @returns Returns a void Promise
  */
 function copyToClipboardPromise(textToCopy) {
-    return new Promise((resolve, reject) => {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(textToCopy)
-                .then(() => resolve())
-                .catch(() => reject());
+  return new Promise((resolve, reject) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          // console.log('Text copied to clipboard:', textToCopy);
+          resolve();
+        })
+        .catch((error) => {
+          console.error('Failed to copy text to clipboard:', error);
+          reject(error);
+        });
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = textToCopy;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          console.log('Text copied to clipboard:', textToCopy);
+          resolve();
+        } else {
+          console.error('Copy command failed.');
+          reject(new Error('Copy command failed.'));
         }
-        else {
-            const textArea = document.createElement("textarea");
-            textArea.value = textToCopy;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-999999px";
-            textArea.style.top = "-999999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                const successful = document.execCommand('copy');
-                successful ? resolve() : reject();
-            }
-            catch (error) {
-                reject();
-            }
-            textArea.remove();
-        }
+      } catch (error) {
+        console.error('Failed to copy text to clipboard:', error);
+        reject(error);
+      }
+      textArea.remove();
+    }
+  });
+}
+
+  
+const targetURLPattern = /^https:\/\/.*\/dataloadeditor.*$/; // Regular expression pattern with wildcards
+
+function pasteTextFromClipboard() {
+  console.log('Pasting text from clipboard...');
+  const textarea = document.createElement('textarea');
+  document.body.appendChild(textarea);
+  textarea.focus();
+  document.execCommand('paste');
+  const pastedText = textarea.value;
+  textarea.remove();
+  console.log('Pasted text:', pastedText);
+  // Perform any actions with the pasted text
+}
+
+function getSelectedText() {
+  const selection = window.getSelection();
+  let selectedText = "";
+
+  if (selection && selection.anchorNode && selection.anchorNode.lastChild) {
+    selectedText = selection.anchorNode.lastChild.value.toLowerCase();
+  }
+
+  return selectedText;
+}
+
+function applyQuickFormat() {
+  const selectedText = getSelectedText();
+  const transformedText = selectedText.toUpperCase();
+  copyToClipboardPromise(transformedText)
+    .then(() => {
+      console.log('Text copied to clipboard:', transformedText);
+      // pasteTextFromClipboard();
+    })
+    .catch((error) => {
+      console.error('Failed to copy text to clipboard:', error);
     });
 }
-const targetURLPattern = "https://*/dataloadeditor*"; // URL pattern with wildcards
+
 function addFormatButton() {
-    const targetURLPattern = "https://nortera.us.qlikcloud.com/dataloadeditor*"; // URL pattern with wildcards
-    const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
-    if (toolbarDiv) {
-        const button = document.createElement("button");
-        button.textContent = "Apply Quick Format";
-        button.addEventListener("click", applyQuickFormat);
-        toolbarDiv.appendChild(button);
-    }
-    function applyQuickFormat() {
-        var _a, _b;
-        const selectedText = (_b = (_a = window.getSelection()) === null || _a === void 0 ? void 0 : _a.toString()) !== null && _b !== void 0 ? _b : "";
-        const transformedText = selectedText.toUpperCase();
-        document.execCommand("insertText", false, transformedText);
-    }
+  const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']>div:first-child");
+  if (toolbarDiv && !toolbarDiv.hasButton) {
+    const button = document.createElement("button");
+    button.textContent = "Apply Quick Format";
+    button.addEventListener("click", applyQuickFormat);
+    toolbarDiv.appendChild(button);
+    toolbarDiv.hasButton = true;
+  }
 }
-// Check URL on initial page load
-if (window.location.href.match(targetURLPattern)) {
+
+function handleURLChange() {
+  if (targetURLPattern.test(window.location.href)) {
+    observeDOMChanges();
+  }
+}
+
+function observeDOMChanges() {
+  const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']");
+  if (toolbarDiv && !toolbarDiv.hasButton) {
     addFormatButton();
+    toolbarDiv.hasButton = true;
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      const toolbarDiv = document.querySelector("div[tid='qs-sub-toolbar']");
+      if (toolbarDiv && !toolbarDiv.hasButton) {
+        observer.disconnect();
+        addFormatButton();
+        toolbarDiv.hasButton = true;
+        break;
+      }
+    }
+  });
+
+  observer.observe(document, { childList: true, subtree: true });
 }
+
+// Check URL on initial page load
+if (targetURLPattern.test(window.location.href)) {
+  observeDOMChanges();
+}
+
 // Observe URL changes
 window.addEventListener("popstate", handleURLChange);
-function handleURLChange() {
-    if (window.location.href.match(targetURLPattern)) {
-        addFormatButton();
-    }
-}

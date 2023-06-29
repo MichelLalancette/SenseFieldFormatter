@@ -17,6 +17,10 @@ function handleMutation(mutation: MutationRecord): void {
   }
 }
 
+/**
+ * CreateCopyOutputDiv creates a div with elements inside to allow the copying of the expression editor output.
+ * @returns Returns a div containing a button to copy the output and a label to write error messages.
+ */
 function CreateCopyOutputDiv(): HTMLDivElement {
   // Create a div element for the copy output section
   const copyOutputDiv = document.createElement('div');
