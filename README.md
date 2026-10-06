@@ -1,4 +1,4 @@
-# Note: Tis project has been archived and is no longer in development.
+# Note: This project has been archived and is no longer in development.
 
 ## Sense Field Formatter.
 
